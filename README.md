@@ -1,2 +1,3 @@
 # Projetos
-Proetos de estudos
+
+Primeiro Repositório do Git GitHub
