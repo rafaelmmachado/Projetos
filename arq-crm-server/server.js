@@ -135,28 +135,37 @@ async function tick() {
 }
 setInterval(tick, 10000);
 
-/* ---------- API de Conversões (Meta) ---------- */
+/* ---------- Trackeamento: Pixel + token (API de Conversões do Meta) ---------- */
+// O CRM não fala com o Meta. Só o Trackeamento manda os eventos do funil, com o Pixel e o token configurados na tela.
+const pixel = () => ({ id: (S.settings && S.settings.pixelId) || DATASET_ID, token: (S.settings && S.settings.capiToken) || env.META_CAPI_TOKEN || '', test: (S.settings && S.settings.testCode) || '' });
+const sha = v => crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
+function eventPayload(l, ev) {
+  const user = { ph: l.wa ? [sha(l.wa)] : [], external_id: [sha(l.id)] };
+  const fn = first(l.name); if (fn && !/^\(|\+/.test(fn)) user.fn = [sha(fn)];
+  if (l.utm && l.utm.fbclid) user.fbc = 'fb.1.' + l.at + '.' + l.utm.fbclid;
+  const data = { event_name: ev.name, event_time: Math.floor(ev.at / 1000), event_id: l.id + '-' + ev.name, action_source: 'system_generated', user_data: user,
+    custom_data: { lead_event_source: 'CRM ARQ Mídia', event_source: 'crm', funnel_stage: ev.stage + 1 } };
+  if (l.adId) data.custom_data.ad_id = l.adId;
+  if (ev.name === 'Purchase') Object.assign(data.custom_data, { currency: 'BRL', value: l.value || PRICE[String(l.car || '').toLowerCase()] || 1000 });
+  return data;
+}
+async function postEvents(data) {
+  const px = pixel(); const body = { data }; if (px.test) body.test_event_code = px.test;
+  const r = await fetch(GRAPH + '/' + px.id + '/events?access_token=' + encodeURIComponent(px.token), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error((j.error && (j.error.error_user_msg || j.error.message)) || ('HTTP ' + r.status));
+  return j;
+}
 async function sendEvent(l, ev) {
   if (l.origin !== 'meta') { ev.status = 'só no CRM'; return; }
-  const token = env.META_CAPI_TOKEN || WA_TOKEN;
-  if (!DATASET_ID || !token) { ev.status = 'pronto, aguardando integração'; return; }
-  const sha = v => crypto.createHash('sha256').update(String(v)).digest('hex');
-  let data;
-  if (WABA_ID && l.metaLeadId) {
-    // API oficial: liga o evento ao clique exato no anúncio
-    data = { event_name: ev.name, event_time: Math.floor(ev.at / 1000), action_source: 'business_messaging', messaging_channel: 'whatsapp',
-      user_data: { whatsapp_business_account_id: WABA_ID, ctwa_clid: l.metaLeadId } };
-  } else {
-    // QR code: o Meta liga o evento à pessoa pelo telefone (criptografado)
-    data = { event_name: ev.name, event_time: Math.floor(ev.at / 1000), action_source: 'system_generated',
-      user_data: { ph: l.wa ? [sha(l.wa)] : [], external_id: [sha(l.id)] }, custom_data: { lead_event_source: 'CRM ARQ Mídia', event_source: 'crm' } };
-  }
-  if (ev.name === 'Purchase') data.custom_data = { currency: 'BRL', value: l.value || PRICE[String(l.car || '').toLowerCase()] || 1000 };
-  try {
-    const r = await fetch(GRAPH + '/' + DATASET_ID + '/events?access_token=' + encodeURIComponent(token), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [data] }) });
-    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status)); ev.status = 'enviado'; log('evento', ev.name, l.name); }
+  const px = pixel();
+  if (!px.id || !px.token) { ev.status = 'pronto, aguardando integração'; return; }
+  try { await postEvents([eventPayload(l, ev)]); ev.status = 'enviado'; delete ev.err; log('evento', ev.name, l.name); }
   catch (e) { ev.status = 'erro'; ev.err = e.message; log('erro evento', ev.name, e.message); }
   save();
+}
+// quando o Pixel é conectado depois, manda o que ficou esperando
+async function flushEvents() {
+  for (const l of S.leads) for (const ev of l.events || []) if (l.origin === 'meta' && ev.status === 'pronto, aguardando integração') await sendEvent(l, ev);
 }
 
 /* ---------- mensagens que chegam ---------- */
@@ -214,7 +223,7 @@ function onOfficial(value) {
 /* ---------- tela ↔ servidor ---------- */
 const evKey = e => e.name + '@' + e.at;
 function merge(c) {
-  delete c.wa;
+  delete c.wa; delete c.settings;
   if (Array.isArray(c.autos)) S.autos = c.autos;
   for (const cl of c.leads || []) {
     let sl = leadById(cl.id);
@@ -246,7 +255,7 @@ function authed(req) {
 function readBody(req, limit = 8e6) {
   return new Promise((res, rej) => { const ch = []; let n = 0; req.on('data', d => { n += d.length; if (n > limit) { rej(new Error('grande demais')); req.destroy(); } else ch.push(d); }); req.on('end', () => res(Buffer.concat(ch))); req.on('error', rej); });
 }
-const view = () => Object.assign({}, S, { wa: MODE === 'qr' ? Object.assign({ mode: 'qr', onlyMeta: AUTO_ONLY_META }, waqr.status) : { mode: 'oficial', state: PHONE_ID ? 'conectado' : 'sem configuração', onlyMeta: AUTO_ONLY_META } });
+const view = () => Object.assign({}, S, { settings: { pixelId: pixel().id, tokenSet: !!pixel().token, tokenEnd: pixel().token.slice(-4), testCode: pixel().test }, wa: MODE === 'qr' ? Object.assign({ mode: 'qr', onlyMeta: AUTO_ONLY_META }, waqr.status) : { mode: 'oficial', state: PHONE_ID ? 'conectado' : 'sem configuração', onlyMeta: AUTO_ONLY_META } });
 const json = (res, code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
 
 http.createServer(async (req, res) => {
@@ -284,6 +293,22 @@ http.createServer(async (req, res) => {
     if (!authed(req)) { res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="CRM ARQ Midia"' }); return res.end('Senha necessária'); }
     if (u.pathname === '/api/state' && req.method === 'GET') return json(res, 200, view());
     if (u.pathname === '/api/state' && req.method === 'PUT') { merge(JSON.parse((await readBody(req)).toString())); return json(res, 200, view()); }
+    if (u.pathname === '/api/pixel' && req.method === 'POST') {
+      const f = JSON.parse((await readBody(req, 1e4)).toString() || '{}');
+      S.settings = S.settings || {};
+      if ('pixelId' in f) S.settings.pixelId = String(f.pixelId).replace(/\D/g, '');
+      if (f.capiToken) S.settings.capiToken = String(f.capiToken).trim();
+      if ('testCode' in f) S.settings.testCode = String(f.testCode || '').trim();
+      if (f.disconnect) S.settings = {};
+      save(); flushEvents();
+      return json(res, 200, view());
+    }
+    if (u.pathname === '/api/pixel/test' && req.method === 'POST') {
+      const px = pixel(); if (!px.id || !px.token) return json(res, 400, { error: 'Preencha o ID do Pixel e o token.' });
+      try { const j = await postEvents([{ event_name: 'LeadSubmitted', event_time: Math.floor(Date.now() / 1000), event_id: 'teste-' + Date.now(), action_source: 'system_generated', user_data: { external_id: [sha('teste')] }, custom_data: { lead_event_source: 'CRM ARQ Mídia', event_source: 'crm' } }]);
+        return json(res, 200, { ok: true, received: j.events_received }); }
+      catch (e) { return json(res, 400, { error: e.message }); }
+    }
     if (u.pathname === '/api/wa/logout' && req.method === 'POST') { if (waqr) await waqr.logout(); return json(res, 200, view()); }
     if (u.pathname === '/' || u.pathname === '/index.html') { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); return fs.createReadStream(INDEX).pipe(res); }
     res.writeHead(404); res.end('não encontrado');

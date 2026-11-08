@@ -630,6 +630,20 @@ button.lrow:hover { background: var(--bg); }
   const brl = n => 'R$ ' + Math.round(n).toLocaleString('pt-BR');
   const reached = (l, s) => (l.events || []).some(e => e.stage === s) || (l.stage >= s && l.stage !== 5);
   const DEST = { meta: 'Meta Ads', google: 'Google Ads' };
+  function pixelCard() {
+    const st = (LIVE && S.settings) || {}, on = st.pixelId && st.tokenSet;
+    return `<section class="card wa-card" style="grid-template-columns:minmax(0,1fr)"><div>
+      <h2><span class="wa-dot" style="background:${on ? '#1E8E3E' : 'var(--lime)'}"></span>${on ? 'Pixel conectado' : 'Conecte o Pixel do Meta'}</h2>
+      <p>${on ? 'Pixel ' + esc(st.pixelId) + ' · token final ' + esc(st.tokenEnd) + '. Cada etapa do funil dos leads do anúncio vai pro Meta sozinha.' : 'No Gerenciador de Eventos do Meta: escolha o Pixel, copie o <b>ID</b> e, em Configurações > API de Conversões, clique em <b>Gerar token de acesso</b>. Cole os dois aqui.'}</p></div>
+      <form id="px-form" class="grid2" style="align-items:end">
+        <div class="field"><label for="px-id">ID do Pixel</label><input class="input" id="px-id" inputmode="numeric" value="${esc(st.pixelId || '')}" placeholder="Ex.: 123456789012345" ${LIVE ? '' : 'disabled'}></div>
+        <div class="field"><label for="px-token">Token da API de Conversões</label><input class="input" id="px-token" type="password" autocomplete="off" placeholder="${st.tokenSet ? '•••• ' + esc(st.tokenEnd) + ' (deixe vazio pra manter)' : 'Cole o token aqui'}" ${LIVE ? '' : 'disabled'}></div>
+        <div class="field"><label for="px-test">Código de teste (opcional)</label><input class="input" id="px-test" value="${esc(st.testCode || '')}" placeholder="TEST12345, do Gerenciador de Eventos" ${LIVE ? '' : 'disabled'}></div>
+        <div class="actions"><button class="btn btn--lime" type="submit" ${LIVE ? '' : 'disabled'}>Salvar</button><button class="btn btn--line" type="button" data-pxtest ${LIVE && on ? '' : 'disabled'}>Enviar evento de teste</button></div>
+      </form>
+      ${LIVE ? '' : '<p class="note">Funciona quando o CRM estiver rodando no servidor.</p>'}
+    </section>`;
+  }
   function vTrack() {
     const L = S.leads, qual = L.filter(l => reached(l, 1)), won = L.filter(l => l.stage === 4);
     const total = won.reduce((a, l) => a + valueOf(l), 0);
@@ -641,7 +655,7 @@ button.lrow:hover { background: var(--bg); }
     const ev = [];
     L.forEach(l => (l.events || []).forEach(e => ev.push({ l, e })));
     ev.sort((a, b) => b.e.at - a.e.at);
-    return head('o que cada anúncio virou de verdade', 'Trackeamento') +
+    return head('o que cada anúncio virou de verdade', 'Trackeamento') + pixelCard() +
       `<div class="kpis">
         <div class="card kpi"><span>Leads</span><b>${L.length}</b><small>entraram no funil</small></div>
         <div class="card kpi"><span>Qualificados</span><b>${qual.length}</b><small>${pct(qual.length, L.length)} dos leads</small></div>
@@ -658,7 +672,7 @@ button.lrow:hover { background: var(--bg); }
         <div class="card tbl-wrap"><table class="tbl"><thead><tr><th>Etapa do funil</th><th>Evento que vai pro Meta</th><th>O que significa</th></tr></thead><tbody>
         ${STAGES.map((st, i) => `<tr><td>${stageHTML(i)}</td><td>${META_EVENTS[i] ? '<code style="font:800 13px/18px ui-monospace,Menlo,monospace">' + META_EVENTS[i] + '</code>' : '<span class="sub">nenhum</span>'}</td><td class="sub">${META_WHY[i]}</td></tr>`).join('')}
         </tbody></table></div>
-        <p class="note">São os nomes oficiais que o Meta aceita para leads de anúncio de WhatsApp. Cada evento vai com o código do clique no anúncio (ctwa_clid) e a conta do WhatsApp Business, e o Purchase vai com valor e moeda (BRL). Na campanha, dá pra otimizar por QualifiedLead ou Purchase em vez de só mensagem.</p>
+        <p class="note">São os nomes oficiais que o Meta aceita para leads de anúncio de WhatsApp. Cada evento vai pelo seu Pixel, com o telefone do lead criptografado, e o Purchase vai com valor e moeda (BRL). Na campanha, dá pra otimizar por QualifiedLead ou Purchase em vez de só mensagem.</p>
       </section>
       <section class="sec"><h3>Eventos que voltam para os anúncios</h3>
         <div class="card evlist">${ev.slice(0, 8).map(({ l, e }) => `<div class="evrow"><span><code>${e.name}</code> · ${esc(l.name)}</span>${DEST[l.origin] ? '<span class="badge badge--wait">' + esc(e.status === 'enviado' ? 'enviado ao Meta' : e.status === 'erro' ? 'erro ao enviar' : 'pronto, aguardando integração') + '</span>' : '<span class="badge badge--wait" style="background:none;border:1px solid var(--line)">só no CRM</span>'}<span class="sub">${DEST[l.origin] ? 'Vai para ' + DEST[l.origin] : 'Não vai: lead não veio de anúncio'} · ${pad2(e.stage + 1)} ${STAGES[e.stage]} · ${when(e.at)}</span></div>`).join('')}</div>
@@ -749,6 +763,7 @@ button.lrow:hover { background: var(--bg); }
     const t = e.target;
     const g = t.closest('[data-go]'); if (g) return go(g.dataset.go);
     if (t.closest('[data-new]')) return openNew();
+    if (t.closest('[data-pxtest]')) { fetch('api/pixel/test', { method: 'POST' }).then(r => r.json()).then(d => d.ok ? toast('Evento de teste enviado', 'O Meta recebeu ' + (d.received || 1) + ' evento. Confira em Eventos de teste.') : toast('O Meta recusou', d.error || '')); return; }
     if (t.closest('[data-walogout]')) { fetch('api/wa/logout', { method: 'POST' }).then(r => r.json()).then(d => { S = d; render(); toast('WhatsApp desconectado', 'Escaneie o QR de novo para conectar outro número.'); }); return; }
     const sm = t.closest('[data-sim]'); if (sm) return simulate(sm.dataset.sim);
     const cp = t.closest('[data-copy]'); if (cp) { const sc = srcById(cp.dataset.copy); const url = 'https://' + realLink(sc.link).replace(/ /g, '%20').replace(/\[/g, '%5B').replace(/\]/g, '%5D'); try { navigator.clipboard.writeText(url).then(() => toast('Link copiado', sc.name), () => toast('Copie o link', url)); } catch (err) { toast('Copie o link', url); } return; }
@@ -790,6 +805,11 @@ button.lrow:hover { background: var(--bg); }
   });
   document.addEventListener('submit', e => {
     e.preventDefault();
+    if (e.target.id === 'px-form') {
+      const body = { pixelId: $('#px-id').value, testCode: $('#px-test').value }; if ($('#px-token').value.trim()) body.capiToken = $('#px-token').value.trim();
+      fetch('api/pixel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json()).then(d => { S = d; render(); toast('Pixel salvo', 'Os eventos que estavam esperando já estão indo pro Meta.'); });
+      return;
+    }
     if (e.target.id === 'new-form') {
       const v = id => $('#' + id).value.trim();
       const l = { id: uid('l'), name: v('n-name'), phone: v('n-phone'), car: v('n-car') || 'Serviço a definir', city: v('n-city'), origin: 'manual', src: '', detail: '', stage: 0, at: Date.now(), replied: false, events: [{ name: META_EVENTS[0], stage: 0, at: Date.now() }], metaLeadId: '' };
