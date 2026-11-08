@@ -1,0 +1,796 @@
+<title>CRM ARQ Mídia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* CRM ARQ Mídia: menu preto fixo, telas trocam na mesma página. Paleta: papel #F4F4F2, tinta #0B0B0B, laranja #FF9A00 (só preenchimento). Sempre claro. */
+:root {
+  color-scheme: light;
+  --green: #0B0B0B; --lime: #FF9A00; --white: #FFFFFF;
+  --bg: #F4F4F2; --tint: #E9E9E6; --line: #E2E2DF;
+  --ink: #0B0B0B; --muted: #5A5A5A; --faint: #8A8A85;
+  --late: #B3261E;
+  --o-meta: #0866FF; --o-google: #1E8E3E;
+  --font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-d: Outfit, "Avenir Next", system-ui, sans-serif;
+  --r-sm: 8px; --r-md: 14px; --r-pill: 999px;
+  --shadow: 0 1px 2px rgba(11,11,11,.08);
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 500 14px/20px var(--font); -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+.ico { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Shell */
+.shell { display: grid; grid-template-columns: 256px minmax(0, 1fr); min-height: 100%; }
+.side { background: var(--green); color: var(--white); padding: 24px 16px; display: flex; flex-direction: column; gap: 24px; position: sticky; top: 0; height: 100vh; }
+.brand { display: grid; gap: 10px; padding: 0 8px; }
+.wordmark { font: 800 26px/1 var(--font-d); letter-spacing: -0.03em; white-space: nowrap; }
+.wordmark::after { content: "."; color: var(--lime); }
+.logo-slot { height: 44px; border: 1.5px dashed rgba(255,154,0,.7); border-radius: var(--r-sm); display: grid; place-items: center; font: 700 10px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--lime); }
+.brand__name { display: flex; align-items: center; gap: 10px; font: 800 13px/1 var(--font); letter-spacing: .16em; text-transform: uppercase; }
+.brand__name::before { content: ""; width: 4px; height: 16px; background: var(--lime); border-radius: 2px; }
+.nav { display: grid; gap: 4px; }
+.nav button { display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; width: 100%; min-width: 0; border: 0; border-radius: var(--r-pill); background: none; color: rgba(255,255,255,.72); font: 700 14px/1 var(--font); text-align: left; white-space: nowrap; }
+.nav button:hover { color: var(--white); background: rgba(255,255,255,.07); }
+.nav button[aria-current="page"] { background: var(--lime); color: var(--green); }
+.nav small { margin-left: auto; font: 700 8px/1 var(--font); letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.side__foot { margin-top: auto; font-size: 11px; line-height: 16px; color: rgba(255,255,255,.6); padding: 0 8px; display: grid; gap: 10px; }
+.side__foot button { height: 32px; border-radius: var(--r-pill); border: 1px solid rgba(255,255,255,.25); background: none; color: var(--white); font: 700 11px/1 var(--font); }
+
+.main { min-width: 0; padding: 32px max(24px, env(safe-area-inset-right, 0px)) 40px max(24px, env(safe-area-inset-left, 0px)); display: grid; gap: 20px; align-content: start; }
+.head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.kicker { font: 800 11px/14px var(--font); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: flex; gap: 10px; align-items: center; }
+.kicker::before { content: ""; width: 4px; height: 14px; background: var(--lime); border-radius: 2px; }
+h1 { font: 800 44px/46px var(--font-d); letter-spacing: -0.03em; margin: 0; text-transform: lowercase; }
+h1::after { content: "."; color: var(--lime); }
+h2, .fcard__name, .who b, .qitem__time, .src__foot b { font-family: var(--font-d) !important; }
+h1 em { font-style: normal; background: var(--green); color: var(--lime); padding: 0 10px; border-radius: 10px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: var(--r-pill); border: 1.5px solid transparent; font: 800 13px/1 var(--font); white-space: nowrap; }
+.btn .ico { width: 16px; height: 16px; }
+.btn--lime { background: var(--lime); color: var(--green); }
+.btn--green { background: var(--green); color: var(--white); }
+.btn--line { background: var(--white); color: var(--green); border-color: var(--line); }
+.btn--ghost { background: none; color: var(--muted); }
+.btn--sm { height: 34px; padding: 0 14px; font-size: 12px; }
+.btn:hover { filter: brightness(.96); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.card { background: var(--white); border: 1px solid var(--line); border-radius: var(--r-md); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--white); font: 700 12px/1 var(--font); }
+.chip b { color: var(--faint); font-weight: 700; }
+.chip[aria-pressed="true"] { background: var(--green); color: var(--white); border-color: var(--green); }
+.chip[aria-pressed="true"] b { color: var(--lime); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.input { height: 42px; width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--white); padding: 0 12px; font: 500 14px/20px var(--font); color: var(--ink); }
+textarea.input { height: auto; min-height: 90px; padding: 10px 12px; resize: vertical; }
+.input::placeholder { color: var(--faint); }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > label, .field > .lbl { font: 800 11px/14px var(--font); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.field small { font-size: 12px; color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.search { position: relative; max-width: 380px; }
+.search .ico { position: absolute; left: 12px; top: 12px; color: var(--faint); }
+.search .input { padding-left: 38px; }
+
+/* origem */
+.origin { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border-radius: var(--r-pill); background: var(--tint); font: 800 12px/1 var(--font); white-space: nowrap; }
+.origin small { font: 600 11px/1 var(--font); color: var(--muted); }
+.stage { display: inline-flex; align-items: center; gap: 8px; font: 700 13px/1 var(--font); white-space: nowrap; }
+.stage b { font-weight: 900; color: var(--green); background: var(--lime); border-radius: 6px; padding: 3px 5px; font-size: 11px; }
+.stage--lost b { background: var(--tint); color: var(--muted); }
+.badge { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 10px; border-radius: var(--r-pill); font: 800 10px/1 var(--font); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.badge--wait { background: var(--tint); color: var(--green); }
+.badge--ok { background: var(--green); color: var(--lime); }
+.badge--late { background: #FBE9E7; color: var(--late); }
+.badge--audio { background: var(--green); color: var(--white); }
+
+/* leads */
+.list { overflow: hidden; }
+.lrow { display: grid; grid-template-columns: minmax(180px, 1.3fr) 150px minmax(140px, 1fr) 160px minmax(200px, 1.2fr); gap: 16px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; text-align: left; }
+.lrow:last-child { border-bottom: 0; }
+button.lrow:hover { background: var(--bg); }
+.lrow--head { padding-block: 10px; background: var(--tint); font: 800 10px/14px var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.who b { display: block; font: 800 15px/20px var(--font); }
+.who small, .sub { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
+.empty { padding: 32px; text-align: center; color: var(--muted); }
+
+/* funil */
+.board { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; align-items: flex-start; }
+.col { flex: 0 0 270px; background: var(--tint); border-radius: var(--r-md); padding: 12px; display: grid; gap: 10px; min-height: 160px; transition: box-shadow .15s; }
+.col.is-over { box-shadow: inset 0 0 0 2px var(--lime); }
+.col__head { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 6px; }
+.col__head span { font: 700 12px/1 var(--font); color: var(--muted); }
+.meta-ev { margin: -4px 4px 2px; font: 600 11px/1 var(--font); color: var(--muted); }
+.meta-ev b { font-weight: 800; color: var(--green); font-family: ui-monospace, Menlo, monospace; }
+.evlist { display: grid; gap: 0; }
+.evrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.evrow:last-child { border-bottom: 0; }
+.evrow code { font: 800 12px/16px ui-monospace, Menlo, monospace; color: var(--green); }
+.fcard { background: var(--white); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; text-align: left; box-shadow: var(--shadow); cursor: grab; width: 100%; }
+.fcard:hover { border-color: var(--green); }
+.fcard.is-drag { opacity: .4; }
+.fcard__top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.fcard__name { font: 800 14px/18px var(--font); margin: 0; }
+.fcard__foot { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+
+/* follow-up */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; }
+.day { display: grid; gap: 8px; }
+.day + .day { margin-top: 16px; }
+.day h3 { margin: 0; font: 800 11px/14px var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.qitem { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px; }
+.qitem.is-late { border-color: var(--late); }
+.qitem__time { font: 900 16px/20px var(--font); }
+.qitem__who { margin: 0 0 4px; font: 800 14px/18px var(--font); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.qitem__text { margin: 0; font-size: 13px; line-height: 18px; color: var(--muted); overflow-wrap: anywhere; }
+.qitem__src { margin-top: 6px; font-size: 11px; color: var(--faint); }
+.qitem__acts { display: grid; gap: 6px; justify-items: end; }
+.link { background: none; border: 0; padding: 0; font: 800 11px/14px var(--font); color: var(--green); text-decoration: underline; text-decoration-color: var(--lime); text-decoration-thickness: 2px; text-underline-offset: 3px; white-space: nowrap; }
+.link--muted { color: var(--muted); text-decoration-color: var(--line); }
+.panel { padding: 18px; display: grid; gap: 14px; position: sticky; top: 16px; }
+.panel h2 { margin: 0; font: 900 22px/26px var(--font); letter-spacing: -0.02em; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--tint); border-radius: var(--r-pill); padding: 3px; }
+.seg button { height: 36px; border: 0; border-radius: var(--r-pill); background: none; font: 800 12px/1 var(--font); color: var(--muted); display: inline-flex; gap: 8px; align-items: center; justify-content: center; }
+.seg button[aria-pressed="true"] { background: var(--green); color: var(--white); }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick button { height: 30px; padding: 0 12px; border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--white); font: 700 11px/1 var(--font); }
+.quick button:hover { border-color: var(--green); }
+.vars { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--muted); }
+.var { border: 0; background: var(--tint); color: var(--green); border-radius: 6px; padding: 3px 7px; font: 700 11px/1.4 var(--font); }
+.note { font-size: 12px; line-height: 17px; color: var(--muted); margin: 0; }
+
+/* gravador */
+.rec { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: var(--green); color: var(--white); }
+.rec__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rec__btn { width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--lime); color: var(--green); display: grid; place-items: center; flex: none; }
+.rec__btn.is-on { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(255,154,0,.25); } }
+.rec__time { font: 900 18px/1 var(--font); font-variant-numeric: tabular-nums; }
+.rec__hint { font-size: 12px; color: rgba(255,255,255,.75); }
+.rec audio { width: 100%; height: 36px; }
+.rec .link { color: var(--white); }
+.rec label.link { cursor: pointer; }
+
+/* automação */
+.autos { display: grid; gap: 16px; }
+.auto { padding: 18px; display: grid; gap: 14px; }
+.auto__head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.auto__head h2 { margin: 0; font: 900 20px/24px var(--font); letter-spacing: -0.01em; }
+.auto__head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.trigger { display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px; border-radius: var(--r-pill); background: var(--green); color: var(--white); font: 800 12px/1 var(--font); }
+.trigger .ico { color: var(--lime); width: 16px; height: 16px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.step { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
+.step:not(:last-child)::before { content: ""; position: absolute; left: 13px; top: 30px; bottom: 0; width: 2px; background: var(--line); }
+.step__n { width: 28px; height: 28px; border-radius: 50%; background: var(--lime); color: var(--green); display: grid; place-items: center; font: 900 12px/1 var(--font); }
+.step__n--stop { background: var(--tint); }
+.step__card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; background: var(--white); min-width: 0; }
+.step__stop { padding: 4px 0; color: var(--muted); font-size: 13px; }
+.timing { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.timing .input { width: auto; height: 34px; font-size: 13px; }
+.timing input[type="number"] { width: 64px; }
+.switch { position: relative; width: 44px; height: 24px; border-radius: var(--r-pill); border: 0; background: var(--line); padding: 0; flex: none; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--white); transition: transform .15s; }
+.switch[aria-checked="true"] { background: var(--green); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); background: var(--lime); }
+.toggle { display: inline-flex; gap: 10px; align-items: center; font: 700 12px/1 var(--font); color: var(--muted); }
+
+/* rastreamento */
+.how3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.how3 > div { padding: 16px; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: start; font-size: 13px; line-height: 18px; color: var(--muted); }
+.how3 b { display: block; color: var(--ink); font-weight: 800; font-size: 14px; margin-bottom: 2px; }
+.srcs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.src { padding: 18px; display: grid; gap: 12px; align-content: start; }
+.src h2 { margin: 0; font: 900 18px/22px var(--font); }
+.src p { margin: 0; color: var(--muted); font-size: 13px; line-height: 18px; }
+.lnk { display: flex; gap: 8px; align-items: center; background: var(--tint); border-radius: 10px; padding: 8px 8px 8px 12px; }
+.lnk code { flex: 1; min-width: 0; font: 600 12px/16px ui-monospace, Menlo, monospace; overflow-wrap: anywhere; color: var(--green); }
+.lnk--auto { font-size: 12px; font-weight: 700; color: var(--green); padding: 10px 12px; }
+.src__foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.src__foot b { color: var(--ink); font-size: 18px; font-weight: 900; }
+.auto-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; color: var(--green); font-weight: 700; margin-top: 6px; }
+.auto-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); flex: none; }
+
+/* trackeamento */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { padding: 16px; display: grid; gap: 4px; }
+.kpi span { font: 800 10px/14px var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.kpi b { font: 800 32px/36px var(--font-d); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kpi small { font-size: 12px; color: var(--muted); }
+.tbl-wrap { overflow-x: auto; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+.tbl th { text-align: left; padding: 10px 14px; background: var(--tint); font: 800 10px/14px var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.tbl td { padding: 12px 14px; border-top: 1px solid var(--line); vertical-align: middle; }
+.tbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tbl td.num b { font-weight: 800; }
+.bar { height: 6px; border-radius: 3px; background: var(--tint); overflow: hidden; margin-top: 6px; min-width: 60px; }
+.bar i { display: block; height: 100%; background: var(--lime); }
+
+/* modo ao vivo (servidor + WhatsApp) */
+.is-live [data-sim], .is-live #reset { display: none !important; }
+.chat { display: grid; gap: 6px; padding: 12px; }
+.bub { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
+.bub small { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
+.bub--in { background: var(--tint); justify-self: start; border-bottom-left-radius: 4px; }
+.bub--out { background: #FFE7C2; justify-self: end; border-bottom-right-radius: 4px; }
+
+/* soon */
+.soon { padding: 48px 24px; text-align: center; display: grid; gap: 8px; justify-items: center; }
+.soon h2 { margin: 0; font: 900 28px/32px var(--font); }
+.soon p { margin: 0; color: var(--muted); max-width: 46ch; }
+
+/* gaveta + modal */
+.scrim { position: fixed; inset: 0; background: rgba(11,11,11,.4); z-index: 40; display: flex; justify-content: flex-end; }
+.drawer { width: min(460px, 100%); height: 100%; overflow-y: auto; background: var(--bg); padding: 24px; display: grid; gap: 18px; align-content: start; animation: slide .2s ease-out; }
+@keyframes slide { from { transform: translateX(20px); opacity: 0; } }
+.drawer__top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.drawer h2 { margin: 0; font: 900 26px/30px var(--font); letter-spacing: -0.02em; }
+.x { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--white); display: grid; place-items: center; flex: none; }
+.kv { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 8px 12px; margin: 0; padding: 14px; font-size: 13px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.sec { display: grid; gap: 8px; }
+.sec h3 { margin: 0; font: 800 11px/14px var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.mini { display: grid; gap: 4px; padding: 10px 12px; font-size: 13px; }
+.mini b { font-weight: 800; }
+.modal { position: fixed; inset: 0; background: rgba(11,11,11,.4); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.modal form { width: min(520px, 100%); max-height: 100%; overflow-y: auto; background: var(--bg); border-radius: var(--r-md); padding: 24px; display: grid; gap: 14px; }
+.modal h2 { margin: 0; font: 900 24px/28px var(--font); }
+.foot { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.pick { display: flex; gap: 6px; flex-wrap: wrap; }
+.pick input { position: absolute; opacity: 0; pointer-events: none; }
+.pick span { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--white); font: 700 12px/1 var(--font); cursor: pointer; }
+.pick input:checked + span { background: var(--green); color: var(--white); border-color: var(--green); }
+.pick input:focus-visible + span { outline: 2px solid var(--lime); outline-offset: 2px; }
+.toasts { position: fixed; right: 16px; bottom: 16px; z-index: 60; display: grid; gap: 8px; width: min(360px, calc(100% - 32px)); }
+.toast { background: var(--green); color: var(--white); border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 18px; box-shadow: 0 10px 24px rgba(11,11,11,.25); border-left: 4px solid var(--lime); }
+.toast b { display: block; font-weight: 800; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+@media (max-width: 1100px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .panel { position: static; }
+  .lrow { grid-template-columns: minmax(160px, 1.2fr) 150px 150px minmax(180px, 1.2fr); }
+  .lrow .c-car { display: none; }
+}
+@media (max-width: 760px) {
+  .shell { display: block; }
+  .side { position: sticky; z-index: 30; height: auto; flex-direction: row; align-items: center; gap: 12px; padding: 10px 16px; overflow-x: auto; }
+  .brand { padding: 0; } .wordmark { font-size: 20px; }
+  .nav { display: flex; gap: 4px; }
+  .nav small, .nav .ico, .side__foot { display: none; }
+  .nav button { height: 34px; padding: 0 12px; font-size: 12px; }
+  .main { padding: 20px 16px 32px; }
+  h1 { font-size: 32px; line-height: 36px; }
+  .actions { width: 100%; } .actions .btn { flex: 1; }
+  .lrow--head { display: none; }
+  .lrow { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .lrow .c-phone { display: none; }
+  .lrow .c-origin { grid-column: 1 / -1; }
+  .col { flex-basis: 82vw; }
+  .grid2, .how3, .srcs { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .evrow { grid-template-columns: minmax(0, 1fr); } .evrow .badge { justify-self: start; }
+  .qitem { grid-template-columns: 46px minmax(0, 1fr); }
+  .qitem__acts { grid-column: 2; display: flex; gap: 14px; justify-items: start; }
+  .drawer { padding: 18px; }
+}
+</style>
+
+<div class="shell">
+  <aside class="side">
+    <div class="brand"><div class="wordmark">arq mídia</div></div>
+    <nav class="nav" aria-label="Menu principal">
+      <button type="button" data-go="leads"><svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M17 11a3 3 0 1 0 0-6"/><path d="M22 21c0-3-1.8-5.5-4.5-6.5"/></svg>Leads</button>
+      <button type="button" data-go="funil"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg>Funil</button>
+      <button type="button" data-go="followup"><svg class="ico" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>Follow-up</button>
+      <button type="button" data-go="automacao"><svg class="ico" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Automação</button>
+      <button type="button" data-go="rastreamento"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Rastreamento</button>
+      <button type="button" data-go="trackeamento"><svg class="ico" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Trackeamento</button>
+    </nav>
+    <div class="side__foot">
+      <span id="mode-note">Protótipo com leads de exemplo. Os envios são simulados e ficam salvos só neste navegador.</span>
+      <button type="button" id="reset">Restaurar exemplo</button>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+<div id="layer"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+  /* ---------- base ---------- */
+  const KEY = 'arq-crm-v3';
+  const DAY = 864e5, MIN = 6e4;
+  const STAGES = ['novo lead', 'qualificado', 'proposta enviada', 'negociação', 'compra', 'perdido'];
+  // evento que cada etapa manda para o Meta Ads (API de Conversões) quando a integração for ligada
+  // nomes que o Meta reconhece na API de Conversões para mensagens (WhatsApp). "perdido" não manda nada.
+  const META_EVENTS = ['LeadSubmitted', 'QualifiedLead', 'AddToCart', 'InitiateCheckout', 'Purchase', ''];
+  const META_WHY = ['Lead chegou pelo anúncio e mandou mensagem', 'Lead tem perfil e interesse de verdade', 'Recebeu a proposta (o Meta lê como "colocou no carrinho")', 'Está fechando (o Meta lê como "iniciou a compra")', 'Comprou. Vai junto o valor em R$', 'Não manda nada. O Meta só aprende com quem avança'];
+  const ctwa = () => 'ARA' + Array.from({ length: 22 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'[Math.floor(Math.random() * 56)]).join('');
+  const ORIGINS = { meta: 'Meta Ads', google: 'Google Ads', organic: 'Orgânico', referral: 'Indicação', site: 'Site', whatsapp: 'WhatsApp direto', manual: 'Sem rastreio' };
+  const OCOLOR = { meta: '#0866FF', google: '#1E8E3E', organic: '#A85400', referral: '#0B0B0B', site: '#8A8A85', whatsapp: '#FF9A00', manual: '#CFCFCB' };
+  // rastreamento: cada canal tem um jeito de o CRM saber sozinho de onde o lead veio
+  const WA = 'wa.me/5548999990000';
+  const SRC = [
+    { id: 'meta-ad', origin: 'meta', name: 'Anúncio no Meta (clique pro WhatsApp)', how: 'Quando o lead clica no anúncio e chama no WhatsApp, o próprio WhatsApp manda junto qual anúncio foi.', link: '', auto: 'Não precisa de link: funciona sozinho em todo anúncio de mensagem.', found: 'pelo anúncio que ele clicou', details: ['Anúncio: Tráfego pago · Vídeo 01', 'Anúncio: Gestão de redes sociais · Carrossel', 'Anúncio: Panfletagem · Story'] },
+    { id: 'google', origin: 'google', name: 'Google Ads', how: 'O link do anúncio leva um código do Google (gclid) e as UTMs até a página de proposta.', link: 'arqmidia.com.br/proposta?utm_source=google&utm_medium=cpc&utm_campaign=trafego-pago', found: 'pelo código do Google no link', details: ['Pesquisa: gestor de tráfego pago', 'Pesquisa: agência de redes sociais', 'Pesquisa: empresa de panfletagem'] },
+    { id: 'insta', origin: 'organic', name: 'Link da bio do Instagram', how: 'A mensagem do link já sai com o código [IG]. O CRM lê o código na primeira mensagem.', link: WA + '?text=Quero uma proposta [IG]', found: 'pelo código [IG] na 1ª mensagem', details: ['Bio do Instagram · código [IG]'] },
+    { id: 'site', origin: 'site', name: 'Formulário do site', how: 'O formulário guarda a página e as UTMs de onde a pessoa chegou.', link: 'arqmidia.com.br/proposta?utm_source=site', found: 'pelo formulário do site', details: ['Formulário de proposta do site'] },
+    { id: 'indica', origin: 'referral', name: 'Link de indicação', how: 'Cada cliente tem um link com o código dele. Quem chega por ali fica como indicado por ele.', link: WA + '?text=Quero uma proposta [IND-PAULO]', found: 'pelo código de indicação na 1ª mensagem', details: ['Indicado por Paulo Silveira · código [IND-PAULO]', 'Indicado por Fernanda Lopes · código [IND-FERNANDA]'] },
+    { id: 'direto', origin: 'whatsapp', name: 'WhatsApp direto', how: 'Chamou no número sem anúncio e sem código. O CRM marca como direto.', link: '', auto: 'Não precisa de link: é o que sobra quando não tem anúncio nem código.', found: 'sem anúncio e sem código', details: ['Chamou direto no número, sem código'] }
+  ];
+  const SRC_BY_ORIGIN = { meta: 'meta-ad', google: 'google', organic: 'insta', site: 'site', referral: 'indica', whatsapp: 'direto' };
+  const srcById = id => SRC.find(x => x.id === id);
+  const ODOT = o => `<span class="dot" style="background:${OCOLOR[o]};${o === 'referral' || o === 'whatsapp' ? 'box-shadow:inset 0 0 0 2px var(--white),0 0 0 1px ' + OCOLOR[o] : ''}"></span>`;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pad2 = n => String(n).padStart(2, '0');
+  const hm = t => { const d = new Date(t); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); };
+  const sod = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+  const at = (off, h) => { const d = new Date(); d.setSeconds(0, 0); d.setDate(d.getDate() + off); const [a, b] = h.split(':').map(Number); d.setHours(a, b); return d.getTime(); };
+  const dayLabel = t => { const k = Math.round((sod(t) - sod(Date.now())) / DAY); if (k === 0) return 'Hoje'; if (k === 1) return 'Amanhã'; if (k === -1) return 'Ontem'; const d = new Date(t); return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1); };
+  const when = t => dayLabel(t) + ' às ' + hm(t);
+  const ago = t => { const m = Math.round((Date.now() - t) / MIN); if (m < 60) return 'há ' + Math.max(1, m) + ' min'; const h = Math.round(m / 60); if (h < 24) return 'há ' + h + 'h'; const d = Math.round(h / 24); return 'há ' + d + (d === 1 ? ' dia' : ' dias'); };
+  const first = n => String(n).split(' ')[0];
+  const fill = (t, l) => String(t || '').replace(/\{\{nome\}\}/g, first(l.name)).replace(/\{\{servico\}\}/g, (l.car || 'o serviço').toLowerCase()).replace(/\{\{empresa\}\}/g, l.city || 'sua empresa');
+  let seq = 0; const uid = p => p + Date.now().toString(36) + (seq++);
+  const ICON = {
+    mic: '<svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    stop: '<svg class="ico" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+    text: '<svg class="ico" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+    bolt: '<svg class="ico" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+    plus: '<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+    x: '<svg class="ico" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+    clock: '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    search: '<svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>'
+  };
+
+  /* ---------- automações padrão ---------- */
+  function defaultAutos() {
+    return [
+      { id: 'entrada', on: true, name: 'Quando o lead entra no funil', trigger: 'Lead novo em 01 novo lead',
+        desc: 'Manda boas-vindas na hora e, se o lead não responder, segue com o follow-up sozinho. Para assim que ele responder.',
+        steps: [
+          { id: 'e1', type: 'texto', delay: { mode: 'min', v: 0 }, text: 'Oi {{nome}}! Aqui é da ARQ Mídia. Vi que você quer {{servico}} pra {{empresa}}. Posso te fazer 3 perguntas rápidas pra montar sua proposta?' },
+          { id: 'e2', type: 'texto', delay: { mode: 'min', v: 60 }, text: '{{nome}}, conseguiu ver minha mensagem? Em 5 minutinhos eu entendo o momento da {{empresa}} e te digo o que faz sentido.' },
+          { id: 'e3', type: 'texto', delay: { mode: 'day', d: 1, at: '10:00' }, text: 'Bom dia, {{nome}}! Ainda quer conversar sobre {{servico}}? É só me responder aqui.' },
+          { id: 'e4', type: 'texto', delay: { mode: 'day', d: 3, at: '14:00' }, text: '{{nome}}, separei resultados de clientes parecidos com a {{empresa}}. Quer que eu te mande?' },
+          { id: 'e5', type: 'texto', delay: { mode: 'day', d: 7, at: '10:00' }, text: 'Oi {{nome}}, vou encerrar seu atendimento pra não te incomodar. Se quiser retomar, é só responder esta mensagem.' }
+        ] },
+      { id: 'cotacao', on: true, name: 'Quando a proposta é enviada', trigger: 'Card movido para 03 proposta enviada',
+        desc: 'Cobra a resposta da proposta sem você precisar lembrar. Para quando o lead responder ou comprar.',
+        steps: [
+          { id: 'c1', type: 'texto', delay: { mode: 'day', d: 1, at: '10:00' }, text: '{{nome}}, conseguiu olhar a proposta de {{servico}}? Ficou alguma dúvida?' },
+          { id: 'c2', type: 'texto', delay: { mode: 'day', d: 3, at: '15:00' }, text: '{{nome}}, consigo manter essa condição até o fim da semana. Vamos começar com a {{empresa}}?' }
+        ] },
+      { id: 'fechado', on: true, name: 'Quando vira compra', trigger: 'Card movido para 05 compra',
+        desc: 'Boas-vindas de cliente e próximo passo do onboarding.',
+        steps: [
+          { id: 'f1', type: 'texto', delay: { mode: 'min', v: 5 }, text: 'Bem-vindo à ARQ Mídia, {{nome}}! Bora fazer a {{empresa}} crescer. Vou te mandar o formulário de onboarding pra gente começar.' }
+        ] }
+    ];
+  }
+
+  /* ---------- exemplo ---------- */
+  function seed() {
+    const L = [
+      ['Marcos Pereira', '(48) 99812-4410', 'Pizzaria Forno a Lenha', 'Tráfego pago', 'meta', 'Anúncio: Tráfego pago · Vídeo 01', 0, 40 * MIN, false],
+      ['Ana Beatriz Costa', '(48) 99654-2201', 'Studio Ana Nails', 'Redes sociais', 'meta', 'Anúncio: Gestão de redes sociais · Carrossel', 0, 26 * 3600e3, false],
+      ['Rogério Dutra', '(51) 98120-7733', 'Dutra Materiais de Construção', 'Panfletagem', 'google', 'Pesquisa: empresa de panfletagem', 1, 2 * DAY, false],
+      ['Juliana Machado', '(48) 99777-1820', 'Clínica Sorriso Pleno', 'Tráfego pago', 'referral', 'Indicado por Paulo Silveira · código [IND-PAULO]', 1, 3 * DAY, true],
+      ['Cláudio Ramos', '(51) 99301-5544', 'Ramos Academia', 'Redes sociais', 'organic', 'Bio do Instagram · código [IG]', 2, 4 * DAY, false],
+      ['Fernanda Lopes', '(48) 99540-3312', 'Lopes Imóveis', 'Tráfego pago', 'meta', 'Anúncio: Tráfego pago · Vídeo 01', 2, 5 * DAY, true],
+      ['Diego Martins', '(51) 98455-9021', 'Burger do Diego', 'Panfletagem', 'whatsapp', 'Chamou direto no número, sem código', 3, 6 * DAY, true],
+      ['Patrícia Nunes', '(48) 99611-0045', 'Nunes Moda Feminina', 'Redes sociais', 'site', 'Formulário de proposta do site', 3, 8 * DAY, false],
+      ['Paulo Silveira', '(48) 99876-2214', 'Auto Center Silveira', 'Tráfego pago', 'meta', 'Anúncio: Tráfego pago · Vídeo 01', 4, 15 * DAY, true],
+      ['Lucas Teixeira', '(51) 98543-0098', 'Teixeira Contabilidade', 'Redes sociais', 'google', 'Pesquisa: agência de redes sociais', 5, 12 * DAY, false]
+    ].map(([name, phone, city, car, origin, detail, stage, age, replied]) => { const t0 = Date.now() - age; const ev = []; for (let i = 0; i <= stage; i++) { if (i === 5 || (stage === 5 && i > 1 && i < 5)) continue; ev.push({ name: META_EVENTS[i], stage: i, at: t0 + i * (age / (stage + 1)) }); } return { id: uid('l'), name, phone, city, car, origin, src: SRC_BY_ORIGIN[origin], detail, stage, at: t0, replied, events: ev, metaLeadId: origin === 'meta' ? ctwa() : '' }; });
+    const S = { v: 2, leads: L, queue: [], autos: defaultAutos() };
+    // fila inicial a partir das automações
+    const add = (l, auto, stepId, t, status) => { const st = auto.steps.find(s => s.id === stepId); S.queue.push({ id: uid('q'), leadId: l.id, type: st.type, text: st.text, audio: '', at: t, status, auto: auto.id, step: stepId }); };
+    const A = S.autos[0], C = S.autos[1];
+    add(L[0], A, 'e1', L[0].at + MIN, 'enviada'); add(L[0], A, 'e2', L[0].at + 60 * MIN, 'enviada'); add(L[0], A, 'e3', at(1, '10:00'), 'agendada'); add(L[0], A, 'e4', at(3, '14:00'), 'agendada');
+    add(L[1], A, 'e1', L[1].at + MIN, 'enviada'); add(L[1], A, 'e2', L[1].at + 60 * MIN, 'enviada'); add(L[1], A, 'e3', at(0, '10:00'), 'enviada'); add(L[1], A, 'e4', at(2, '14:00'), 'agendada');
+    add(L[2], A, 'e4', at(0, '14:00') < Date.now() ? at(1, '14:00') : at(0, '14:00'), 'agendada');
+    add(L[4], C, 'c1', at(-1, '10:00'), 'enviada'); add(L[4], C, 'c2', at(1, '15:00'), 'agendada');
+    S.queue.push({ id: uid('q'), leadId: L[6].id, type: 'texto', text: 'Diego, montei um plano de panfletagem pro bairro da hamburgueria. Te ligo amanhã cedo?', audio: '', at: at(1, '09:00'), status: 'agendada', auto: null });
+    S.queue.push({ id: uid('q'), leadId: L[7].id, type: 'audio', text: 'Áudio explicando o plano de redes sociais', audio: '', at: at(0, '17:30') < Date.now() ? at(1, '17:30') : at(0, '17:30'), status: 'agendada', auto: null });
+    return S;
+  }
+
+  let S;
+  try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
+  if (!S || S.v !== 2 || !Array.isArray(S.leads)) S = seed();
+  // LIVE = a página está rodando no servidor do CRM (ligado ao WhatsApp). Senão, protótipo local.
+  let LIVE = false, pushT = null;
+  const save = () => {
+    if (LIVE) { clearTimeout(pushT); pushT = setTimeout(push, 300); return; }
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Não deu pra salvar', 'O áudio pode estar grande demais para este navegador.'); }
+  };
+  const busyUI = () => document.querySelector('.modal') || (document.activeElement && document.activeElement.matches('input,textarea,select')) || document.querySelector('.rec__btn.is-on');
+  async function push() {
+    try { const r = await fetch('api/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(S) }); if (r.ok) { const d = await r.json(); S = d; if (!busyUI()) render(); } else toast('Não salvou no servidor', 'Erro ' + r.status); }
+    catch (e) { toast('Sem conexão com o servidor', 'Tente de novo em instantes.'); }
+  }
+  async function pull() {
+    if (busyUI()) return;
+    try { const r = await fetch('api/state', { cache: 'no-store' }); if (!r.ok) return; const d = await r.json(); if (JSON.stringify(d) !== JSON.stringify(S)) { const before = S.leads.length; S = d; render(); if (S.leads.length > before) toast('Lead novo no WhatsApp', S.leads[0].name + ' · ' + ORIGINS[S.leads[0].origin]); } } catch (e) {}
+  }
+  async function boot() {
+    try {
+      const r = await fetch('api/state', { cache: 'no-store' });
+      if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return;
+      const d = await r.json(); if (!d.live) return;
+      LIVE = true; S = d; document.body.classList.add('is-live');
+      $('#mode-note').textContent = 'Conectado ao WhatsApp. Leads chegam sozinhos e as mensagens saem pelo seu número.';
+      if (!S.autos) { S.autos = defaultAutos(); push(); }
+      render(); setInterval(pull, 5000);
+    } catch (e) {}
+  }
+  const ui = { view: 'leads', origin: '', q: '', open: null, fu: { leadId: '', type: 'texto', text: 'Oi {{nome}}! Passando pra saber se ainda quer conversar sobre {{servico}} pra {{empresa}}. Posso te mandar a proposta?', audio: '', date: '', time: '10:00' } };
+  const leadById = id => S.leads.find(l => l.id === id);
+  const autoById = id => S.autos.find(a => a.id === id);
+
+  function toast(t, s) { const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `<b>${esc(t)}</b>${esc(s || '')}`; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 4000); }
+
+  /* ---------- motor de automação ---------- */
+  function stepTime(start, st, prev) {
+    if (st.delay.mode === 'min') return start + st.delay.v * MIN;
+    const d = new Date(sod(start) + st.delay.d * DAY); const [h, m] = st.delay.at.split(':').map(Number); d.setHours(h, m, 0, 0);
+    let t = d.getTime(); if (t <= prev) t = prev + 30 * MIN; return t;
+  }
+  function runAuto(id, l) {
+    const a = autoById(id); if (!a || !a.on) return 0;
+    let prev = Date.now(), n = 0;
+    a.steps.forEach(st => { const t = stepTime(Date.now(), st, prev); prev = t; S.queue.push({ id: uid('q'), leadId: l.id, type: st.type, text: st.text, audio: st.audio || '', at: t, status: 'agendada', auto: a.id, step: st.id }); n++; });
+    return n;
+  }
+  function cancelAuto(l, onlyAuto) { let n = 0; S.queue.forEach(q => { if (q.leadId === l.id && q.status === 'agendada' && (!onlyAuto || q.auto)) { q.status = 'cancelada'; n++; } }); return n; }
+  function logEvent(l, s) { if (!META_EVENTS[s]) return; (l.events = l.events || []).push({ name: META_EVENTS[s], stage: s, at: Date.now() }); }
+  function setStage(l, s) {
+    if (l.stage === s) return;
+    l.stage = s; logEvent(l, s);
+    if (s === 4 || s === 5) cancelAuto(l, true);
+    let n = 0;
+    if (s === 2) n = runAuto('cotacao', l);
+    if (s === 4) n = runAuto('fechado', l);
+    save(); render();
+    toast('Lead movido para ' + pad2(s + 1) + ' ' + STAGES[s], (META_EVENTS[s] ? 'Evento ' + META_EVENTS[s] + ' registrado para o Meta.' : 'Perdido não manda evento pro Meta.') + (n ? ' ' + n + ' mensage' + (n > 1 ? 'ns agendadas' : 'm agendada') + ' pela automação.' : ''));
+  }
+  function setReplied(l, v) {
+    l.replied = v;
+    let n = 0; if (v) n = cancelAuto(l, true);
+    save(); render();
+    toast(v ? first(l.name) + ' respondeu' : 'Marcado como sem resposta', v ? (n ? n + ' follow-up automático cancelado.' : 'Nenhum follow-up automático pendente.') : 'Os próximos follow-ups que você agendar seguem normalmente.');
+  }
+  // simula o envio: o que venceu vira "enviada" (a menos que o lead tenha respondido)
+  function tick() {
+    if (LIVE) return;
+    let ch = false;
+    S.queue.forEach(q => { if (q.status === 'agendada' && q.at <= Date.now()) { const l = leadById(q.leadId); if (q.auto && l && l.replied) q.status = 'cancelada'; else q.status = 'enviada'; ch = true; } });
+    if (ch) { save(); if (!document.querySelector('.rec__btn.is-on') && !document.activeElement.matches('textarea,input')) render(); }
+  }
+
+  /* ---------- telas ---------- */
+  const head = (kicker, title, actions) => `<div class="head"><div><div class="kicker">${kicker}</div><h1>${title}</h1></div><div class="actions">${actions || ''}</div></div>`;
+  const stageHTML = s => `<span class="stage ${s === 5 ? 'stage--lost' : ''}"><b>${pad2(s + 1)}</b>${STAGES[s]}</span>`;
+  const originHTML = l => `<span class="origin">${ODOT(l.origin)}${ORIGINS[l.origin]}</span>`;
+  const foundHTML = l => { const sc = srcById(l.src); return sc ? `<span class="auto-tag">Identificado sozinho ${esc(sc.found)}</span>` : '<span class="sub" style="margin-top:4px">Cadastrado na mão, sem rastreio</span>'; };
+  const nextOf = l => S.queue.filter(q => q.leadId === l.id && q.status === 'agendada').sort((a, b) => a.at - b.at)[0];
+  const statusBadge = l => l.stage >= 4 ? '' : l.replied ? '<span class="badge badge--ok">respondeu</span>' : '<span class="badge badge--wait">sem resposta</span>';
+
+  function vLeads() {
+    const q = ui.q.trim().toLowerCase();
+    const F = S.leads.filter(l => (!ui.origin || l.origin === ui.origin) && (!q || (l.name + ' ' + l.phone + ' ' + l.car + ' ' + l.city).toLowerCase().includes(q)));
+    return head('a origem é marcada sozinha pelo rastreamento', 'Leads', `<button class="btn btn--line" type="button" data-new>${ICON.plus}Cadastrar na mão</button><button class="btn btn--lime" type="button" data-sim="">${ICON.bolt}Simular lead chegando</button>`) +
+      `<div class="chips"><button type="button" class="chip" data-origin="" aria-pressed="${!ui.origin}">Todos <b>${S.leads.length}</b></button>${Object.keys(ORIGINS).filter(o => o !== 'manual' || S.leads.some(l => l.origin === 'manual')).map(o => `<button type="button" class="chip" data-origin="${o}" aria-pressed="${ui.origin === o}">${ODOT(o)}${ORIGINS[o]} <b>${S.leads.filter(l => l.origin === o).length}</b></button>`).join('')}</div>
+      <label class="search"><span class="sr">Buscar</span>${ICON.search}<input class="input" id="q" type="search" value="${esc(ui.q)}" placeholder="Buscar nome, empresa, telefone ou serviço"></label>
+      <div class="card list"><div class="lrow lrow--head"><span>Lead</span><span class="c-phone">WhatsApp</span><span class="c-car">Serviço</span><span>Etapa</span><span>De onde veio</span></div>
+      ${F.length ? F.map(l => `<button type="button" class="lrow" data-lead="${l.id}">
+        <span class="who"><b>${esc(l.name)}</b><small>${l.city ? esc(l.city) + " · " : ""}entrou ${ago(l.at)}</small></span>
+        <span class="c-phone">${esc(l.phone)}</span>
+        <span class="c-car">${esc(l.car)}</span>
+        <span>${stageHTML(l.stage)}</span>
+        <span class="c-origin">${originHTML(l)}<span class="sub" style="margin-top:4px">${esc(l.detail || '')}</span>${foundHTML(l)}</span></button>`).join('') : '<div class="empty">Nenhum lead encontrado.</div>'}</div>`;
+  }
+
+  function vFunil() {
+    return head('do primeiro contato ao fechamento', 'Funil', `<button class="btn btn--lime" type="button" data-sim="">${ICON.bolt}Simular lead chegando</button>`) +
+      `<p class="note">Arraste o card para mudar de etapa. Lead novo dispara a automação de entrada; proposta enviada dispara o follow-up da proposta. Quando o lead responder, abra o card e marque "Respondeu" que os follow-ups automáticos param. Cada mudança de etapa já registra o evento que vai para o Meta Ads.</p>
+      <div class="board">${STAGES.map((s, i) => { const L = S.leads.filter(l => l.stage === i); return `<section class="col" data-stage="${i}" aria-label="${s}">
+        <div class="col__head">${stageHTML(i)}<span>${L.length}</span></div>
+        <div class="meta-ev" title="Evento enviado ao Meta Ads quando o lead entra nesta etapa">Meta: <b>${META_EVENTS[i] || 'não envia'}</b></div>
+        ${L.map(l => { const n = nextOf(l); return `<button type="button" class="fcard" draggable="true" data-lead="${l.id}">
+          <div class="fcard__top"><p class="fcard__name">${esc(l.name)}</p>${statusBadge(l)}</div>
+          <span class="sub">${esc(l.car)}${l.city ? " · " + esc(l.city) : ""}</span>
+          ${originHTML(l)}
+          <div class="fcard__foot">${n ? `<span>${n.type === 'audio' ? '🎙 ' : ''}Próximo envio: ${when(n.at)}</span>` : `<span>${i >= 4 ? '' : 'Sem follow-up agendado'}</span>`}<span>${ago(l.at)}</span></div></button>`; }).join('')}
+      </section>`; }).join('')}</div>`;
+  }
+
+  function vFollow() {
+    const items = S.queue.filter(q => q.status === 'agendada').sort((a, b) => a.at - b.at);
+    const sent = S.queue.filter(q => q.status === 'enviada').sort((a, b) => b.at - a.at).slice(0, 5);
+    const days = []; items.forEach(q => { const k = sod(q.at); let d = days.find(x => x.k === k); if (!d) days.push(d = { k, items: [] }); d.items.push(q); });
+    const qhtml = q => { const l = leadById(q.leadId); if (!l) return ''; const late = q.status === 'agendada' && q.at < Date.now();
+      return `<article class="card qitem ${late ? 'is-late' : ''}"><div class="qitem__time">${hm(q.at)}</div>
+        <div><p class="qitem__who">${esc(l.name)} ${q.type === 'audio' ? '<span class="badge badge--audio">áudio</span>' : ''}${q.status === 'enviada' ? '<span class="badge badge--ok">enviada</span>' : ''}</p>
+        ${q.type === 'audio' ? (q.audio ? `<audio controls src="${q.audio}" style="width:100%;max-width:320px;height:34px"></audio>` : `<p class="qitem__text">${esc(q.text || 'Áudio gravado')}</p>`) : `<p class="qitem__text">${esc(fill(q.text, l))}</p>`}
+        <div class="qitem__src">${q.auto ? '⚡ Automação: ' + esc((autoById(q.auto) || {}).name || '') : 'Agendada por você'}</div></div>
+        ${q.status === 'agendada' ? `<div class="qitem__acts"><button class="link" type="button" data-send="${q.id}">Enviar agora</button><button class="link link--muted" type="button" data-cancel="${q.id}">Cancelar</button></div>` : ''}</article>`; };
+    const f = ui.fu;
+    if (!f.date) { const d = new Date(Date.now() + DAY); f.date = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+    if (!f.leadId || !leadById(f.leadId)) f.leadId = (S.leads.find(l => l.stage < 4) || S.leads[0]).id;
+    return head('quando o lead não responde', 'Follow-up') +
+      `<div class="split"><div>
+        ${days.length ? days.map(d => `<div class="day"><h3>${dayLabel(d.k)} · ${d.items.length} envio${d.items.length > 1 ? 's' : ''}</h3>${d.items.map(qhtml).join('')}</div>`).join('') : '<div class="card empty">Nenhuma mensagem agendada. Agende uma ao lado.</div>'}
+        ${sent.length ? `<div class="day" style="margin-top:24px"><h3>Enviadas há pouco</h3>${sent.map(qhtml).join('')}</div>` : ''}
+      </div>
+      <form class="card panel" id="fu-form" autocomplete="off">
+        <h2>Agendar mensagem</h2>
+        <div class="field"><label for="fu-lead">Lead</label><select class="input" id="fu-lead">${S.leads.map(l => `<option value="${l.id}" ${l.id === f.leadId ? 'selected' : ''}>${esc(l.name)} · ${esc(l.car)}</option>`).join('')}</select></div>
+        <div class="field"><span class="lbl">Tipo</span><div class="seg"><button type="button" data-futype="texto" aria-pressed="${f.type === 'texto'}">${ICON.text}Texto</button><button type="button" data-futype="audio" aria-pressed="${f.type === 'audio'}">${ICON.mic}Áudio</button></div></div>
+        ${f.type === 'texto' ? `<div class="field"><label for="fu-text">Mensagem</label><textarea class="input" id="fu-text">${esc(f.text)}</textarea>
+          <div class="vars">Inserir: <button type="button" class="var" data-var="{{nome}}">{{nome}}</button><button type="button" class="var" data-var="{{servico}}">{{servico}}</button><button type="button" class="var" data-var="{{empresa}}">{{empresa}}</button></div></div>`
+          : `<div class="field"><span class="lbl">Áudio</span>${recHTML('fu', f.audio)}</div>`}
+        <div class="grid2"><div class="field"><label for="fu-date">Dia</label><input class="input" type="date" id="fu-date" value="${f.date}"></div><div class="field"><label for="fu-time">Horário</label><input class="input" type="time" id="fu-time" value="${f.time}"></div></div>
+        <div class="quick"><button type="button" data-q="h1">Daqui 1 hora</button><button type="button" data-q="1,09:00">Amanhã 9h</button><button type="button" data-q="1,14:00">Amanhã 14h</button><button type="button" data-q="3,10:00">Em 3 dias</button></div>
+        <button class="btn btn--lime" type="submit">${ICON.clock}Agendar envio automático</button>
+        <p class="note">O CRM envia sozinho no dia e horário escolhidos. Neste protótipo o envio é simulado; para sair de verdade no WhatsApp precisa ligar a API oficial.</p>
+      </form></div>`;
+  }
+
+  function delayHTML(a, st) {
+    const d = st.delay;
+    return d.mode === 'min'
+      ? `<div class="timing"><select class="input" data-dmode="${a.id}|${st.id}"><option value="min" selected>Minutos depois</option><option value="day">Dias depois</option></select><input class="input" type="number" min="0" value="${d.v}" data-dv="${a.id}|${st.id}" aria-label="Minutos"><span>${d.v === 0 ? 'na hora' : 'min depois'}</span></div>`
+      : `<div class="timing"><select class="input" data-dmode="${a.id}|${st.id}"><option value="min">Minutos depois</option><option value="day" selected>Dias depois</option></select><input class="input" type="number" min="0" value="${d.d}" data-dd="${a.id}|${st.id}" aria-label="Dias"><span>dia(s) depois, às</span><input class="input" type="time" value="${d.at}" data-dat="${a.id}|${st.id}" aria-label="Horário"></div>`;
+  }
+  function vAuto() {
+    return head('o que roda sozinho', 'Automação') +
+      `<p class="note">Cada mensagem pode ser texto ou áudio gravado. Se o lead responder, os follow-ups automáticos dele param na hora.</p>
+      <div class="autos">${S.autos.map(a => `<section class="card auto">
+        <div class="auto__head"><div><span class="trigger">${ICON.bolt}${esc(a.trigger)}</span><h2 style="margin-top:10px">${esc(a.name)}</h2><p>${esc(a.desc)}</p></div>
+          <span class="toggle">${a.on ? 'Ligada' : 'Desligada'}<button type="button" class="switch" role="switch" aria-checked="${a.on}" data-toggle="${a.id}" aria-label="Ligar ou desligar ${esc(a.name)}"></button></span></div>
+        <ol class="steps">${a.steps.map((st, i) => `<li class="step"><span class="step__n">${i + 1}</span><div class="step__card">
+            <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">${delayHTML(a, st)}
+              <div class="seg" style="width:180px"><button type="button" data-stype="${a.id}|${st.id}|texto" aria-pressed="${st.type === 'texto'}">Texto</button><button type="button" data-stype="${a.id}|${st.id}|audio" aria-pressed="${st.type === 'audio'}">Áudio</button></div></div>
+            ${st.type === 'texto' ? `<label class="sr" for="t-${st.id}">Mensagem</label><textarea class="input" id="t-${st.id}" data-stext="${a.id}|${st.id}" style="min-height:64px">${esc(st.text)}</textarea>` : recHTML('st:' + a.id + '|' + st.id, st.audio)}
+            <div style="display:flex;justify-content:flex-end"><button type="button" class="link link--muted" data-sdel="${a.id}|${st.id}">Remover mensagem</button></div>
+          </div></li>`).join('')}
+          ${a.id === 'entrada' ? '<li class="step"><span class="step__n step__n--stop">✓</span><div class="step__stop">Se o lead responder em qualquer momento, a sequência para.</div></li>' : ''}
+        </ol>
+        <div><button type="button" class="btn btn--line btn--sm" data-sadd="${a.id}">${ICON.plus}Adicionar mensagem</button></div>
+      </section>`).join('')}</div>`;
+  }
+  function vRastreamento() {
+    const cnt = id => S.leads.filter(l => l.src === id).length;
+    return head('o CRM descobre sozinho de onde o lead veio', 'Rastreamento', `<button class="btn btn--lime" type="button" data-sim="">${ICON.bolt}Simular lead chegando</button>`) +
+      `<div class="how3">
+        <div class="card"><span class="step__n">1</span><div><b>Cada canal tem seu rastreio</b>Anúncio do Meta, link da bio, link de indicação, site e Google.</div></div>
+        <div class="card"><span class="step__n">2</span><div><b>O lead clica e chama</b>Ele só manda mensagem ou preenche o site. Não precisa dizer de onde veio.</div></div>
+        <div class="card"><span class="step__n">3</span><div><b>O CRM marca a origem</b>Lê o anúncio ou o código e já cria o lead com a origem certa.</div></div>
+      </div>
+      <div class="srcs">${SRC.map(sc => `<section class="card src">
+        <span class="origin" style="justify-self:start">${ODOT(sc.origin)}${ORIGINS[sc.origin]}</span>
+        <h2>${esc(sc.name)}</h2><p>${esc(sc.how)}</p>
+        ${sc.link ? `<div class="lnk"><code>${esc(sc.link)}</code><button type="button" class="btn btn--line btn--sm" data-copy="${esc(sc.id)}">Copiar</button></div>` : `<div class="lnk lnk--auto">${esc(sc.auto)}</div>`}
+        <div class="src__foot"><span><b>${cnt(sc.id)}</b> lead${cnt(sc.id) === 1 ? "" : "s"} por aqui</span><button type="button" class="btn btn--line btn--sm" data-sim="${sc.id}">Simular lead por aqui</button></div>
+      </section>`).join('')}</div>
+      <p class="note">Por enquanto a chegada do lead é simulada. Para valer de verdade: ligar a API oficial do WhatsApp (é ela que entrega o anúncio de origem e a primeira mensagem com o código) e colocar esses links na bio, no site e nos anúncios do Google. O número ${WA.replace('wa.me/', '')} é de exemplo.</p>`;
+  }
+  const POOL = { n: ['Rafaela Souza', 'Eduardo Lima', 'Camila Rocha', 'Thiago Becker', 'Larissa Pires', 'Bruno Antunes', 'Vanessa Ferraz', 'Gustavo Reis', 'Aline Kuhn', 'Mateus Borges'],
+    c: ['Padaria Pão Quente', 'Barbearia Navalha', 'Pet Shop Amigo Fiel', 'Ótica Visão', 'Restaurante Sabor Caseiro', 'Loja Bella Moda', 'Clínica Bem Estar', 'Imobiliária Lar'],
+    v: ['Tráfego pago', 'Redes sociais', 'Panfletagem', 'Tráfego pago', 'Redes sociais'] };
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  function simulate(id) {
+    const sc = srcById(id) || pick(SRC);
+    const ddd = Math.random() < .6 ? '48' : '51';
+    const l = { id: uid('l'), name: pick(POOL.n), phone: '(' + ddd + ') 9' + (8000 + Math.floor(Math.random() * 1999)) + '-' + pad2(Math.floor(Math.random() * 100)) + pad2(Math.floor(Math.random() * 100)), car: pick(POOL.v), city: pick(POOL.c),
+      origin: sc.origin, src: sc.id, detail: pick(sc.details), stage: 0, at: Date.now(), replied: false, events: [{ name: META_EVENTS[0], stage: 0, at: Date.now() }],
+      metaLeadId: sc.origin === 'meta' ? ctwa() : '' };
+    S.leads.unshift(l); const n = runAuto('entrada', l); save(); render(); setTimeout(tick, 1500);
+    toast('Novo lead: ' + l.name, 'Veio de ' + ORIGINS[sc.origin] + ' (' + l.detail + '). O CRM identificou sozinho ' + sc.found + '.' + (n ? ' Boas-vindas sai agora.' : ''));
+  }
+  // trackeamento: o que cada campanha virou (leads, qualificados, vendas, valor) + eventos que voltam pros anúncios
+  const PRICE = { 'tráfego pago': 1500, 'redes sociais': 1200, 'panfletagem': 800 };
+  const valueOf = l => l.value || PRICE[String(l.car || '').toLowerCase()] || 1000;
+  const brl = n => 'R$ ' + Math.round(n).toLocaleString('pt-BR');
+  const reached = (l, s) => (l.events || []).some(e => e.stage === s) || (l.stage >= s && l.stage !== 5);
+  const DEST = { meta: 'Meta Ads', google: 'Google Ads' };
+  function vTrack() {
+    const L = S.leads, qual = L.filter(l => reached(l, 1)), won = L.filter(l => l.stage === 4);
+    const total = won.reduce((a, l) => a + valueOf(l), 0);
+    const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '0%';
+    const G = {};
+    L.forEach(l => { const k = (l.origin === 'meta' || l.origin === 'google') ? l.detail : ORIGINS[l.origin]; const g = G[k] || (G[k] = { name: k, origin: l.origin, leads: 0, qual: 0, won: 0, val: 0 }); g.leads++; if (reached(l, 1)) g.qual++; if (l.stage === 4) { g.won++; g.val += valueOf(l); } });
+    const rows = Object.values(G).sort((a, b) => b.val - a.val || b.won - a.won || b.leads - a.leads);
+    const maxLeads = Math.max(1, ...rows.map(r => r.leads));
+    const ev = [];
+    L.forEach(l => (l.events || []).forEach(e => ev.push({ l, e })));
+    ev.sort((a, b) => b.e.at - a.e.at);
+    return head('o que cada anúncio virou de verdade', 'Trackeamento') +
+      `<div class="kpis">
+        <div class="card kpi"><span>Leads</span><b>${L.length}</b><small>entraram no funil</small></div>
+        <div class="card kpi"><span>Qualificados</span><b>${qual.length}</b><small>${pct(qual.length, L.length)} dos leads</small></div>
+        <div class="card kpi"><span>Fecharam</span><b>${won.length}</b><small>${pct(won.length, L.length)} dos leads</small></div>
+        <div class="card kpi"><span>Valor vendido</span><b>${brl(total)}</b><small>por mês, somando os contratos</small></div>
+      </div>
+      <section class="sec"><h3>Por campanha e anúncio</h3>
+        <div class="card tbl-wrap"><table class="tbl"><thead><tr><th>Campanha / anúncio</th><th>Origem</th><th class="num">Leads</th><th class="num">Qualificados</th><th class="num">Fecharam</th><th class="num">Vendido</th></tr></thead><tbody>
+        ${rows.map(r => `<tr><td><b>${esc(r.name)}</b><div class="bar"><i style="width:${Math.round(r.leads / maxLeads * 100)}%"></i></div></td><td><span class="origin">${ODOT(r.origin)}${ORIGINS[r.origin]}</span></td><td class="num">${r.leads}</td><td class="num">${r.qual}</td><td class="num"><b>${r.won}</b></td><td class="num"><b>${r.val ? brl(r.val) : '—'}</b></td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="note">Os números vêm do próprio funil: quando você move um card, a tabela muda. Valor de exemplo por serviço: tráfego pago R$ 1.500, redes sociais R$ 1.200, panfletagem R$ 800 por mês.</p>
+      </section>
+      <section class="sec"><h3>O que o Meta recebe em cada etapa</h3>
+        <div class="card tbl-wrap"><table class="tbl"><thead><tr><th>Etapa do funil</th><th>Evento que vai pro Meta</th><th>O que significa</th></tr></thead><tbody>
+        ${STAGES.map((st, i) => `<tr><td>${stageHTML(i)}</td><td>${META_EVENTS[i] ? '<code style="font:800 13px/18px ui-monospace,Menlo,monospace">' + META_EVENTS[i] + '</code>' : '<span class="sub">nenhum</span>'}</td><td class="sub">${META_WHY[i]}</td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="note">São os nomes oficiais que o Meta aceita para leads de anúncio de WhatsApp. Cada evento vai com o código do clique no anúncio (ctwa_clid) e a conta do WhatsApp Business, e o Purchase vai com valor e moeda (BRL). Na campanha, dá pra otimizar por QualifiedLead ou Purchase em vez de só mensagem.</p>
+      </section>
+      <section class="sec"><h3>Eventos que voltam para os anúncios</h3>
+        <div class="card evlist">${ev.slice(0, 8).map(({ l, e }) => `<div class="evrow"><span><code>${e.name}</code> · ${esc(l.name)}</span>${DEST[l.origin] ? '<span class="badge badge--wait">' + esc(e.status === 'enviado' ? 'enviado ao Meta' : e.status === 'erro' ? 'erro ao enviar' : 'pronto, aguardando integração') + '</span>' : '<span class="badge badge--wait" style="background:none;border:1px solid var(--line)">só no CRM</span>'}<span class="sub">${DEST[l.origin] ? 'Vai para ' + DEST[l.origin] : 'Não vai: lead não veio de anúncio'} · ${pad2(e.stage + 1)} ${STAGES[e.stage]} · ${when(e.at)}</span></div>`).join('')}</div>
+        <p class="note">Quando a API de Conversões do Meta e do Google estiver ligada, cada evento desses sobe sozinho. Assim o anúncio aprende quem qualifica e fecha, e passa a buscar mais gente parecida.</p>
+      </section>`;
+  }
+  function vSoon(n) {
+    return head('próxima etapa', n === 'rastreamento' ? 'Rastreamento' : 'Trackeamento') + `<div class="card soon"><h2>Em breve</h2><p>Essa parte ainda vai ser criada. Os leads já guardam a origem e cada etapa do funil já registra o evento para o Meta Ads (LeadSubmitted, QualifiedLead, AddToCart, InitiateCheckout, Purchase), então é só ligar aqui depois.</p></div>`;
+  }
+
+  /* ---------- gravador de áudio ---------- */
+  function recHTML(key, audio) {
+    return `<div class="rec" data-rec="${esc(key)}">
+      <div class="rec__row"><button type="button" class="rec__btn" data-recbtn aria-label="Gravar áudio">${ICON.mic}</button>
+        <div><div class="rec__time" data-rectime>${audio ? 'Áudio pronto' : '0:00'}</div><div class="rec__hint" data-rechint>${audio ? 'Ouça abaixo ou grave de novo.' : 'Toque para gravar. Toque de novo para parar.'}</div></div></div>
+      ${audio ? `<audio controls src="${audio}"></audio><div class="rec__row"><button type="button" class="link" data-recdel>Apagar áudio</button></div>` : ''}
+      <div class="rec__row"><label class="link">Ou enviar arquivo de áudio<input type="file" accept="audio/*" data-recfile hidden></label></div>
+    </div>`;
+  }
+  let rec = null;
+  function setAudio(key, url) {
+    if (key === 'fu') ui.fu.audio = url;
+    else { const [aid, sid] = key.slice(3).split('|'); const st = autoById(aid).steps.find(s => s.id === sid); st.audio = url; save(); }
+    render();
+  }
+  async function toggleRec(box) {
+    const key = box.dataset.rec, btn = box.querySelector('[data-recbtn]');
+    if (rec && rec.key === key) { rec.mr.stop(); return; }
+    if (rec) return toast('Já tem uma gravação rolando', 'Pare a gravação atual antes.');
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { box.querySelector('[data-rechint]').textContent = 'O navegador não liberou o microfone aqui. Use "enviar arquivo de áudio" abaixo.'; return; }
+    const mime = ['audio/ogg;codecs=opus', 'audio/mp4', 'audio/webm'].find(m => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m));
+    const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined), chunks = [], t0 = Date.now();
+    rec = { key, mr };
+    btn.classList.add('is-on'); btn.innerHTML = ICON.stop; btn.setAttribute('aria-label', 'Parar gravação');
+    box.querySelector('[data-rechint]').textContent = 'Gravando... toque para parar (máx. 60s).';
+    const timer = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); const el = box.querySelector('[data-rectime]'); if (el) el.textContent = Math.floor(s / 60) + ':' + pad2(s % 60); if (s >= 60) mr.stop(); }, 250);
+    mr.ondataavailable = e => chunks.push(e.data);
+    mr.onstop = () => { clearInterval(timer); stream.getTracks().forEach(t => t.stop()); rec = null;
+      const fr = new FileReader(); fr.onload = () => { setAudio(key, fr.result); toast('Áudio gravado', 'Ouça antes de agendar.'); }; fr.readAsDataURL(new Blob(chunks, { type: mr.mimeType || 'audio/webm' })); };
+    mr.start();
+  }
+
+  /* ---------- render + navegação ---------- */
+  function render() {
+    document.querySelectorAll('[data-go]').forEach(b => b.toggleAttribute('aria-current', b.dataset.go === ui.view));
+    document.querySelectorAll('[data-go][aria-current]').forEach(b => b.setAttribute('aria-current', 'page'));
+    const V = { leads: vLeads, funil: vFunil, followup: vFollow, automacao: vAuto, rastreamento: vRastreamento, trackeamento: vTrack };
+    $('#main').innerHTML = (V[ui.view] || (() => vSoon(ui.view)))();
+    renderDrawer();
+  }
+  function go(v) { ui.view = v; ui.open = null; try { history.replaceState(null, '', '#' + v); } catch (e) {} render(); window.scrollTo(0, 0); }
+
+  function renderDrawer() {
+    const l = ui.open && leadById(ui.open);
+    if (!l) { $('#layer').innerHTML = ''; return; }
+    const Q = S.queue.filter(q => q.leadId === l.id && q.status !== 'cancelada').sort((a, b) => b.at - a.at);
+    $('#layer').innerHTML = `<div class="scrim" data-scrim><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="d-t">
+      <div class="drawer__top"><div><h2 id="d-t">${esc(l.name)}</h2><span class="sub">${esc(l.car)}${l.city ? " · " + esc(l.city) : ""}</span></div><button class="x" type="button" data-close aria-label="Fechar">${ICON.x}</button></div>
+      <div class="card"><dl class="kv"><dt>De onde veio</dt><dd>${originHTML(l)}<span class="sub" style="margin-top:4px">${esc(l.detail || '')}</span>${foundHTML(l)}</dd><dt>WhatsApp</dt><dd>${esc(l.phone)}</dd><dt>Entrou</dt><dd>${ago(l.at)}</dd></dl></div>
+      <div class="field"><label for="d-stage">Etapa do funil</label><select class="input" id="d-stage">${STAGES.map((s, i) => `<option value="${i}" ${i === l.stage ? 'selected' : ''}>${pad2(i + 1)} ${s}</option>`).join('')}</select></div>
+      ${l.stage < 4 ? `<div class="card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b>O lead respondeu?</b><span class="sub">Marcar como respondeu para os follow-ups automáticos.</span></div><button type="button" class="switch" role="switch" aria-checked="${!!l.replied}" data-replied aria-label="Lead respondeu"></button></div>` : ''}
+      <button class="btn btn--lime" type="button" data-schedfor="${l.id}">${ICON.clock}Agendar follow-up (texto ou áudio)</button>
+      <div class="sec"><h3>Eventos para o Meta Ads</h3><div class="card evlist">${(l.events || []).slice().reverse().map(ev => `<div class="evrow"><code>${ev.name}</code><span class="badge badge--wait">${esc(ev.status === 'enviado' ? 'enviado ao Meta' : ev.status === 'erro' ? 'erro ao enviar' : ev.status || 'pronto, aguardando integração')}</span><span class="sub">${ev.err ? esc(ev.err) + ' · ' : ''}${pad2(ev.stage + 1)} ${STAGES[ev.stage]} · ${when(ev.at)}</span></div>`).join('') || '<div class="evrow sub">Nenhum evento ainda.</div>'}</div>
+        <p class="note">${l.metaLeadId ? 'Código do clique no anúncio (ctwa_clid): <b style="overflow-wrap:anywhere">' + l.metaLeadId + '</b>. É ele que liga cada evento ao anúncio certo, pro Meta aprender quem qualifica e compra.' : 'Esse lead não veio de anúncio do Meta, então esses eventos não têm anúncio pra ensinar. Ficam só no CRM.'}</p></div>
+      ${(l.chat || []).length ? `<div class="sec"><h3>Conversa no WhatsApp</h3><div class="card chat">${l.chat.slice(-12).map(c => `<div class="bub bub--${c.dir}">${esc(c.text)}<small>${when(c.at)}</small></div>`).join('')}</div></div>` : ''}
+      <div class="sec"><h3>Mensagens programadas</h3>${Q.length ? Q.map(q => `<div class="card mini"><span><b>${when(q.at)}</b> · ${q.status === 'erro' ? '<span style="color:var(--late)">não saiu: ' + esc(q.err || '') + '</span>' : q.status === 'enviada' ? 'enviada' : 'agendada'}${q.type === 'audio' ? ' · áudio' : ''}</span><span class="sub">${q.type === 'audio' ? esc(q.text || 'Áudio gravado') : esc(fill(q.text, l))}</span></div>`).join('') : '<div class="card mini sub">Nenhuma mensagem ainda.</div>'}</div>
+    </aside></div>`;
+  }
+
+  function openNew() {
+    $('#layer').innerHTML = `<div class="modal" data-scrim><form id="new-form" role="dialog" aria-modal="true" aria-labelledby="n-t">
+      <h2 id="n-t">Cadastrar lead na mão</h2>
+      <div class="grid2"><div class="field"><label for="n-name">Nome</label><input class="input" id="n-name" required placeholder="Ex.: Marcos Pereira"></div>
+      <div class="field"><label for="n-phone">WhatsApp</label><input class="input" id="n-phone" inputmode="tel" placeholder="(48) 99999-0000"></div>
+      <div class="field"><label for="n-car">Serviço</label><input class="input" id="n-car" placeholder="Tráfego pago, redes sociais ou panfletagem"></div>
+      <div class="field"><label for="n-city">Empresa</label><input class="input" id="n-city" placeholder="Ex.: Pizzaria Forno a Lenha"></div></div>
+      <p class="note">Você não escolhe a origem: quem chega pelos links do Rastreamento já entra com a origem marcada. Lead cadastrado na mão fica como "Sem rastreio".</p>
+      <p class="note">Ao salvar, o lead entra em 01 novo lead e a automação de entrada já agenda as mensagens.</p>
+      <div class="foot"><button class="btn btn--ghost" type="button" data-close>Cancelar</button><button class="btn btn--lime" type="submit">Salvar lead</button></div>
+    </form></div>`;
+    setTimeout(() => $('#n-name').focus());
+  }
+
+  /* ---------- eventos ---------- */
+  document.addEventListener('click', e => {
+    const t = e.target;
+    const g = t.closest('[data-go]'); if (g) return go(g.dataset.go);
+    if (t.closest('[data-new]')) return openNew();
+    const sm = t.closest('[data-sim]'); if (sm) return simulate(sm.dataset.sim);
+    const cp = t.closest('[data-copy]'); if (cp) { const sc = srcById(cp.dataset.copy); const url = 'https://' + sc.link.replace(/ /g, '%20').replace(/\[/g, '%5B').replace(/\]/g, '%5D'); try { navigator.clipboard.writeText(url).then(() => toast('Link copiado', sc.name), () => toast('Copie o link', url)); } catch (err) { toast('Copie o link', url); } return; }
+    if (t.closest('[data-close]') || t.matches('[data-scrim]')) { ui.open = null; $('#layer').innerHTML = ''; return; }
+    const o = t.closest('[data-origin]'); if (o) { ui.origin = o.dataset.origin; return render(); }
+    const ld = t.closest('[data-lead]'); if (ld && !ld.dataset.dragged) { ui.open = ld.dataset.lead; return renderDrawer(); }
+    const rp = t.closest('[data-replied]'); if (rp) { const l = leadById(ui.open); return setReplied(l, !l.replied); }
+    const sf = t.closest('[data-schedfor]'); if (sf) { ui.fu.leadId = sf.dataset.schedfor; return go('followup'); }
+    const ft = t.closest('[data-futype]'); if (ft) { keepFu(); ui.fu.type = ft.dataset.futype; return render(); }
+    const vr = t.closest('[data-var]'); if (vr) { const ta = $('#fu-text'); const p = ta.selectionStart ?? ta.value.length; ta.value = ta.value.slice(0, p) + vr.dataset.var + ta.value.slice(ta.selectionEnd ?? p); ui.fu.text = ta.value; ta.focus(); return; }
+    const qk = t.closest('[data-q]'); if (qk) { let d; if (qk.dataset.q === 'h1') d = new Date(Date.now() + 3600e3); else { const [o2, h] = qk.dataset.q.split(','); d = new Date(at(+o2, h)); } $('#fu-date').value = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); $('#fu-time').value = hm(d.getTime()); keepFu(); return; }
+    const sd = t.closest('[data-send]'); if (sd && LIVE) { const q = S.queue.find(x => x.id === sd.dataset.send); q.at = Date.now(); save(); return toast('Enviando agora', 'Sai pelo WhatsApp em alguns segundos.'); }
+    if (sd) { const q = S.queue.find(x => x.id === sd.dataset.send); q.status = 'enviada'; q.at = Date.now(); save(); render(); return toast('Mensagem enviada', 'Envio simulado para ' + first(leadById(q.leadId).name) + '.'); }
+    const cc = t.closest('[data-cancel]'); if (cc) { const q = S.queue.find(x => x.id === cc.dataset.cancel); q.status = 'cancelada'; save(); render(); return toast('Envio cancelado', ''); }
+    const tg = t.closest('[data-toggle]'); if (tg) { const a = autoById(tg.dataset.toggle); a.on = !a.on; save(); render(); return toast(a.on ? 'Automação ligada' : 'Automação desligada', a.name); }
+    const sty = t.closest('[data-stype]'); if (sty) { const [aid, sid, ty] = sty.dataset.stype.split('|'); autoById(aid).steps.find(s => s.id === sid).type = ty; save(); return render(); }
+    const sdel = t.closest('[data-sdel]'); if (sdel) { const [aid, sid] = sdel.dataset.sdel.split('|'); const a = autoById(aid); if (a.steps.length <= 1) return toast('Precisa de pelo menos 1 mensagem', 'Ou desligue a automação.'); a.steps = a.steps.filter(s => s.id !== sid); save(); return render(); }
+    const sadd = t.closest('[data-sadd]'); if (sadd) { const a = autoById(sadd.dataset.sadd); a.steps.push({ id: uid('s'), type: 'texto', delay: { mode: 'day', d: (a.steps.length ? (a.steps[a.steps.length - 1].delay.d || 0) : 0) + 2, at: '10:00' }, text: 'Oi {{nome}}, ' }); save(); return render(); }
+    const rb = t.closest('[data-recbtn]'); if (rb) { if (rb.closest('#fu-form')) keepFu(); return toggleRec(rb.closest('[data-rec]')); }
+    const rd = t.closest('[data-recdel]'); if (rd) { if (rd.closest('#fu-form')) keepFu(); return setAudio(rd.closest('[data-rec]').dataset.rec, ''); }
+    if (t.closest('#reset')) { S = seed(); save(); ui.open = null; render(); toast('Exemplo restaurado', 'Leads, fila e automações voltaram ao original.'); }
+  });
+  function keepFu() { const f = ui.fu; const g = id => { const el = $('#' + id); return el ? el.value : null; }; if (g('fu-lead') != null) f.leadId = g('fu-lead'); if (g('fu-text') != null) f.text = g('fu-text'); if (g('fu-date') != null) f.date = g('fu-date'); if (g('fu-time') != null) f.time = g('fu-time'); }
+  document.addEventListener('input', e => {
+    const t = e.target;
+    if (t.id === 'q') { ui.q = t.value; const pos = t.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); return; }
+    if (t.closest('#fu-form')) return keepFu();
+    const st = (k) => { const [aid, sid] = k.split('|'); return autoById(aid).steps.find(s => s.id === sid); };
+    if (t.dataset.stext) { st(t.dataset.stext).text = t.value; return save(); }
+    if (t.dataset.dv) { st(t.dataset.dv).delay.v = Math.max(0, +t.value || 0); return save(); }
+    if (t.dataset.dd) { st(t.dataset.dd).delay.d = Math.max(0, +t.value || 0); return save(); }
+    if (t.dataset.dat) { if (t.value) st(t.dataset.dat).delay.at = t.value; return save(); }
+  });
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t.id === 'd-stage') return setStage(leadById(ui.open), +t.value);
+    if (t.dataset.dmode) { const [aid, sid] = t.dataset.dmode.split('|'); const s = autoById(aid).steps.find(x => x.id === sid); s.delay = t.value === 'min' ? { mode: 'min', v: 60 } : { mode: 'day', d: 1, at: '10:00' }; save(); return render(); }
+    if (t.matches('[data-recfile]')) { const f = t.files && t.files[0]; if (!f) return; if (f.size > 3e6) return toast('Arquivo grande demais', 'Use um áudio de até 3 MB.'); const key = t.closest('[data-rec]').dataset.rec; if (key === 'fu') keepFu(); const fr = new FileReader(); fr.onload = () => setAudio(key, fr.result); fr.readAsDataURL(f); }
+  });
+  document.addEventListener('submit', e => {
+    e.preventDefault();
+    if (e.target.id === 'new-form') {
+      const v = id => $('#' + id).value.trim();
+      const l = { id: uid('l'), name: v('n-name'), phone: v('n-phone'), car: v('n-car') || 'Serviço a definir', city: v('n-city'), origin: 'manual', src: '', detail: '', stage: 0, at: Date.now(), replied: false, events: [{ name: META_EVENTS[0], stage: 0, at: Date.now() }], metaLeadId: '' };
+      S.leads.unshift(l); const n = runAuto('entrada', l); save(); $('#layer').innerHTML = ''; render(); setTimeout(tick, 1500);
+      return toast('Lead salvo em 01 novo lead', n ? 'Automação de entrada agendou ' + n + ' mensagens. A boas-vindas sai agora.' : 'A automação de entrada está desligada.');
+    }
+    if (e.target.id === 'fu-form') {
+      keepFu(); const f = ui.fu; const l = leadById(f.leadId);
+      if (f.type === 'texto' && !f.text.trim()) return toast('Falta a mensagem', 'Escreva o texto do follow-up.');
+      if (f.type === 'audio' && !f.audio) return toast('Falta o áudio', 'Grave ou envie um áudio antes de agendar.');
+      const [y, mo, d] = f.date.split('-').map(Number), [h, mi] = f.time.split(':').map(Number); const ts = new Date(y, mo - 1, d, h, mi).getTime();
+      if (!ts || ts < Date.now() - MIN) return toast('Horário já passou', 'Escolha um horário a partir de agora.');
+      S.queue.push({ id: uid('q'), leadId: l.id, type: f.type, text: f.type === 'texto' ? f.text : 'Áudio gravado', audio: f.type === 'audio' ? f.audio : '', at: ts, status: 'agendada', auto: null });
+      f.audio = ''; save(); render(); toast('Follow-up agendado', first(l.name) + ' recebe ' + (f.type === 'audio' ? 'o áudio' : 'a mensagem') + ' ' + when(ts) + '.');
+    }
+  });
+  // arrastar no funil
+  document.addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('.fcard'); if (!c) return; e.dataTransfer.setData('text/plain', c.dataset.lead); c.classList.add('is-drag'); });
+  document.addEventListener('dragend', e => { document.querySelectorAll('.is-drag,.is-over').forEach(x => x.classList.remove('is-drag', 'is-over')); });
+  document.addEventListener('dragover', e => { const col = e.target.closest && e.target.closest('.col'); if (!col) return; e.preventDefault(); document.querySelectorAll('.col.is-over').forEach(x => x !== col && x.classList.remove('is-over')); col.classList.add('is-over'); });
+  document.addEventListener('drop', e => { const col = e.target.closest && e.target.closest('.col'); if (!col) return; e.preventDefault(); const l = leadById(e.dataTransfer.getData('text/plain')); if (l) setStage(l, +col.dataset.stage); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { ui.open = null; $('#layer').innerHTML = ''; } });
+
+  tick(); setInterval(tick, 20000); boot();
+  const h = location.hash.slice(1); ui.view = ['leads', 'funil', 'followup', 'automacao', 'rastreamento', 'trackeamento'].includes(h) ? h : 'leads';
+  render();
+})();
+</script>

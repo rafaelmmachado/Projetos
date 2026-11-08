@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: arq-crm
+    runtime: node
+    plan: free
+    buildCommand: "true"
+    rootDir: arq-crm-server
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: CRM_PASSWORD
+        sync: false
+      - key: WA_TOKEN
+        sync: false
+      - key: WA_PHONE_NUMBER_ID
+        sync: false
+      - key: WA_BUSINESS_ACCOUNT_ID
+        sync: false
+      - key: WA_VERIFY_TOKEN
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: META_DATASET_ID
+        sync: false
+      - key: WA_TEMPLATE
+        sync: false

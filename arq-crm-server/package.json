@@ -1,0 +1,9 @@
+{
+  "name": "arq-crm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CRM da ARQ Mídia ligado ao WhatsApp Cloud API e à API de Conversões do Meta",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=20" }
+}
