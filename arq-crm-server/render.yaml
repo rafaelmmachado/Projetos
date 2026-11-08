@@ -3,20 +3,12 @@ services:
     name: arq-crm
     runtime: node
     rootDir: arq-crm-server
-    plan: starter            # precisa ficar ligado 24h pra manter o WhatsApp conectado (o grátis dorme)
+    plan: free               # grátis: o CRM se "cutuca" sozinho pra não dormir
     buildCommand: npm install --omit=dev
     startCommand: node server.js
     healthCheckPath: /health
-    disk:
-      name: dados
-      mountPath: /var/data   # guarda os leads e a sessão do WhatsApp (sem isso, pede QR a cada reinício)
-      sizeGB: 1
     envVars:
-      - key: DATA_DIR
-        value: /var/data
+      - key: MONGODB_URI     # banco grátis (MongoDB Atlas): guarda leads e a sessão do WhatsApp
+        sync: false
       - key: CRM_PASSWORD
-        sync: false
-      - key: META_DATASET_ID
-        sync: false
-      - key: META_CAPI_TOKEN
         sync: false

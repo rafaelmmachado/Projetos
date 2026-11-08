@@ -3,10 +3,11 @@
 const fs = require('fs');
 const QR = require('qrcode');
 const pino = require('pino');
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const store = require('./store');
 
 const status = { state: 'iniciando', qr: '', me: '' };
-let sock = null, dir = '', onMsg = () => {}, retry = 0;
+let sock = null, dir = '', onMsg = () => {}, retry = 0, auth = null;
 
 function textOf(m) {
   const msg = m.message || {};
@@ -19,7 +20,8 @@ function textOf(m) {
 }
 
 async function connect() {
-  const { state, saveCreds } = await useMultiFileAuthState(dir);
+  auth = await store.authState(dir);
+  const { state, saveCreds } = auth;
   let version; try { version = (await fetchLatestBaileysVersion()).version; } catch (e) {}
   sock = makeWASocket({ auth: state, version, logger: pino({ level: 'warn' }), browser: ['CRM ARQ Mídia', 'Chrome', '1.0'], markOnlineOnConnect: false, syncFullHistory: false });
   sock.ev.on('creds.update', saveCreds);
@@ -29,7 +31,7 @@ async function connect() {
     if (u.connection === 'close') {
       const code = u.lastDisconnect && u.lastDisconnect.error && u.lastDisconnect.error.output && u.lastDisconnect.error.output.statusCode;
       status.state = 'desconectado'; status.me = '';
-      if (code === DisconnectReason.loggedOut) { console.log('WhatsApp desconectado pelo celular; vai pedir QR de novo'); fs.rmSync(dir, { recursive: true, force: true }); }
+      if (code === DisconnectReason.loggedOut) { console.log('WhatsApp desconectado pelo celular; vai pedir QR de novo'); await auth.clear(); }
       retry++; setTimeout(connect, Math.min(60000, 2000 * retry));
     }
   });
@@ -48,7 +50,7 @@ async function connect() {
 
 module.exports = {
   status,
-  async start(authDir, handler) { dir = authDir; onMsg = handler; fs.mkdirSync(dir, { recursive: true }); await connect(); },
+  async start(authDir, handler) { dir = authDir; onMsg = handler; await connect(); },
   ready: () => status.state === 'conectado',
   async sendText(jid, text) {
     await sock.presenceSubscribe(jid).catch(() => {});

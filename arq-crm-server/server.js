@@ -30,10 +30,10 @@ const DAY = 864e5, MIN = 6e4;
 const PRICE = { 'tráfego pago': 1500, 'redes sociais': 1200, 'panfletagem': 800 };
 
 /* ---------- dados ---------- */
+const store = require('./store');
 let S = { v: 2, live: true, leads: [], queue: [], autos: null };
-try { S = Object.assign(S, JSON.parse(fs.readFileSync(DATA, 'utf8'))); S.live = true; } catch (e) {}
 let saveTimer = null;
-function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => fs.writeFile(DATA, JSON.stringify(S), () => {}), 200); }
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => store.saveState(DATA, S), 300); }
 const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const leadById = id => S.leads.find(l => l.id === id);
 const log = (...a) => console.log(new Date().toISOString(), ...a);
@@ -258,7 +258,7 @@ function readBody(req, limit = 8e6) {
 const view = () => Object.assign({}, S, { settings: { pixelId: pixel().id, tokenSet: !!pixel().token, tokenEnd: pixel().token.slice(-4), testCode: pixel().test }, wa: MODE === 'qr' ? Object.assign({ mode: 'qr', onlyMeta: AUTO_ONLY_META }, waqr.status) : { mode: 'oficial', state: PHONE_ID ? 'conectado' : 'sem configuração', onlyMeta: AUTO_ONLY_META } });
 const json = (res, code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
 
-http.createServer(async (req, res) => {
+const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   try {
     if (u.pathname === '/webhook' && req.method === 'GET') {
@@ -313,7 +313,14 @@ http.createServer(async (req, res) => {
     if (u.pathname === '/' || u.pathname === '/index.html') { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); return fs.createReadStream(INDEX).pipe(res); }
     res.writeHead(404); res.end('não encontrado');
   } catch (e) { log('erro', e.message); if (!res.headersSent) json(res, 500, { error: e.message }); }
-}).listen(PORT, () => {
+});
+(async () => {
+  await store.init();
+  const saved = await store.loadState(DATA); if (saved) { S = Object.assign(S, saved); S.live = true; }
+  server.listen(PORT, () => {
   log('CRM no ar na porta', PORT, 'WhatsApp:', MODE === 'qr' ? 'QR code' : 'API oficial', AUTO_ONLY_META ? '(só responde anúncio do Meta)' : '');
+  // Render grátis dorme depois de 15 min sem visita: o próprio CRM se visita a cada 10 min pra continuar acordado
+  if (env.RENDER_EXTERNAL_URL) setInterval(() => fetch(env.RENDER_EXTERNAL_URL + '/health').catch(() => {}), 10 * 60 * 1000);
   if (waqr) waqr.start(path.join(env.DATA_DIR || __dirname, 'whatsapp-sessao'), inbound).catch(e => log('erro WhatsApp', e.message));
 });
+})().catch(e => { console.error('Não consegui iniciar:', e.message); process.exit(1); });
