@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM · arq. mídia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo"><span>arq<b>.</b></span><small>mídia</small></div>
+    <span class="tag">CRM</span>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="pipeline">Funil</button>
+    <button class="tab" data-view="lista">Lista</button>
+    <button class="tab" data-view="followups">Follow-ups <span id="fuBadge" class="badge" hidden></span></button>
+  </nav>
+  <div class="actions">
+    <button class="btn ghost" id="menuBtn" aria-label="Mais opções">⋯</button>
+    <button class="btn primary" id="newLead">+ Novo lead</button>
+    <div class="menu" id="menu" hidden>
+      <button data-act="csv">Exportar CSV</button>
+      <button data-act="backup">Baixar backup (JSON)</button>
+      <label>Restaurar backup<input type="file" id="importFile" accept="application/json" hidden></label>
+      <button data-act="demo">Carregar exemplos</button>
+      <button data-act="clear" class="danger">Apagar tudo</button>
+    </div>
+  </div>
+</header>
+
+<section class="kpis" id="kpis"></section>
+
+<section class="filters">
+  <input type="search" id="q" placeholder="Buscar por nome, empresa, WhatsApp…">
+  <select id="fOrigem"><option value="">Todas as origens</option></select>
+  <select id="fPlano"><option value="">Todos os planos</option></select>
+</section>
+
+<main>
+  <section id="view-pipeline" class="view board"></section>
+  <section id="view-lista" class="view" hidden>
+    <div class="tablewrap"><table class="table" id="table"></table></div>
+  </section>
+  <section id="view-followups" class="view" hidden></section>
+</main>
+
+<dialog id="leadDlg">
+  <form method="dialog" id="leadForm">
+    <div class="dlg-head">
+      <h2 id="dlgTitle">Novo lead</h2>
+      <button type="button" class="x" data-close aria-label="Fechar">×</button>
+    </div>
+    <div class="grid">
+      <label class="span2">Nome do contato*<input name="nome" required></label>
+      <label>Empresa / perfil<input name="empresa"></label>
+      <label>Segmento<input name="segmento" list="segList" placeholder="Restaurante, pousada…"></label>
+      <label>WhatsApp<input name="whats" inputmode="tel" placeholder="(51) 99999-9999"></label>
+      <label>Instagram<input name="insta" placeholder="@perfil"></label>
+      <label>Cidade<input name="cidade"></label>
+      <label>Origem<select name="origem"></select></label>
+      <label>Etapa<select name="etapa"></select></label>
+      <label>Plano de interesse<select name="plano"></select></label>
+      <label>Valor mensal (R$)<input name="valor" type="number" min="0" step="0.01"></label>
+      <label>Próximo follow-up<input name="followup" type="date"></label>
+      <label class="span2 lost-only">Motivo da perda<select name="motivo"></select></label>
+      <label class="span2">Observações<textarea name="obs" rows="3"></textarea></label>
+    </div>
+    <div class="hist" id="histBox">
+      <h3>Histórico</h3>
+      <div class="hist-add">
+        <input id="histInput" placeholder="Ex.: Mandei a proposta no WhatsApp">
+        <button type="button" class="btn ghost" id="histAdd">Registrar</button>
+      </div>
+      <ul id="histList"></ul>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger-ghost" id="delLead">Excluir</button>
+      <span class="spacer"></span>
+      <a class="btn ghost" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>
+      <button class="btn primary" value="save">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<datalist id="segList">
+  <option>Restaurante</option><option>Pousada / Hotel</option><option>Proteção veicular</option>
+  <option>Eventos</option><option>Loja / Varejo</option><option>Clínica / Estética</option>
+  <option>Academia</option><option>Oficina / Autopeças</option><option>Político</option><option>Imobiliária</option>
+</datalist>
+
+<div class="toast" id="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
