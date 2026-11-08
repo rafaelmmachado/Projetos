@@ -1,6 +1,7 @@
-// CRM ARQ Mídia: servidor único, sem dependências.
+// CRM ARQ Mídia: servidor único.
 // - Serve a tela do CRM (public/index.html), protegida por senha (CRM_PASSWORD).
-// - Recebe mensagens do WhatsApp (webhook), cria o lead e identifica a origem sozinho.
+// - Conecta no WhatsApp de dois jeitos: pelo QR code (padrão, igual WhatsApp Web) ou pela API oficial (se WA_TOKEN existir).
+// - Lead que chega pelo anúncio do Meta vira lead e recebe a automação. Os outros contatos não são tocados (AUTO_ONLY_META).
 // - Dispara as mensagens agendadas (automação e follow-up) pela API oficial do WhatsApp.
 // - Manda os eventos do funil para o Meta (API de Conversões para mensagens) quando o lead veio de anúncio.
 const http = require('http');
@@ -20,6 +21,9 @@ const DATASET_ID = env.META_DATASET_ID || '';   // opcional: dataset da API de C
 const TEMPLATE = env.WA_TEMPLATE || '';         // modelo aprovado para mandar fora da janela de 24h (ex.: hello_world)
 const TEMPLATE_LANG = env.WA_TEMPLATE_LANG || 'pt_BR';
 const PASSWORD = env.CRM_PASSWORD || '';
+const MODE = WA_TOKEN ? 'oficial' : 'qr';
+const AUTO_ONLY_META = env.AUTO_ONLY_META !== 'false'; // padrão: só responde quem veio do anúncio do Meta
+const waqr = MODE === 'qr' ? require('./wa-qr') : null;
 const DATA = path.join(env.DATA_DIR || __dirname, 'data.json');
 
 const DAY = 864e5, MIN = 6e4;
@@ -58,15 +62,14 @@ function runAuto(id, l) {
 function cancelAuto(l) { S.queue.forEach(q => { if (q.leadId === l.id && q.status === 'agendada' && q.auto) q.status = 'cancelada'; }); }
 
 /* ---------- origem automática ---------- */
-function detectOrigin(msg) {
-  const r = msg.referral;
-  if (r) return { origin: 'meta', src: 'meta-ad', detail: 'Anúncio: ' + (r.headline || r.body || r.source_id || 'Meta'), ctwa: r.ctwa_clid || '' };
-  const text = (msg.text && msg.text.body) || '';
+function detectOrigin(ad, text) {
+  if (ad) return { origin: 'meta', src: 'meta-ad', detail: 'Anúncio: ' + (ad.title || ad.body || ad.sourceId || 'Meta'), ctwa: ad.ctwaClid || '', adId: ad.sourceId || '' };
+  text = text || '';
   const ind = text.match(/\[IND-([^\]]+)\]/i);
   if (ind) return { origin: 'referral', src: 'indica', detail: 'Indicação · código [IND-' + ind[1].toUpperCase() + ']' };
   if (/\[IG\]/i.test(text)) return { origin: 'organic', src: 'insta', detail: 'Bio do Instagram · código [IG]' };
   if (/\[SITE\]/i.test(text)) return { origin: 'site', src: 'site', detail: 'Botão do site · código [SITE]' };
-  return { origin: 'whatsapp', src: 'direto', detail: 'Chamou direto no número, sem código' };
+  return { origin: 'whatsapp', src: 'direto', detail: 'Chamou direto no número, sem código', none: true };
 }
 
 /* ---------- WhatsApp ---------- */
@@ -88,7 +91,13 @@ async function uploadAudio(dataUrl) {
   return j.id;
 }
 async function sendQueued(q) {
-  const l = leadById(q.leadId); if (!l || !l.wa) throw new Error('lead sem WhatsApp');
+  const l = leadById(q.leadId); if (!l || !(l.wa || l.jid)) throw new Error('lead sem WhatsApp');
+  if (MODE === 'qr') {
+    if (!waqr.ready()) throw new Error('WhatsApp desconectado: escaneie o QR em Rastreamento');
+    const jid = l.jid || (l.wa + '@s.whatsapp.net');
+    if (q.type === 'audio') { await waqr.sendAudio(jid, q.audio); return 'áudio'; }
+    const body = fill(q.text, l); await waqr.sendText(jid, body); return body;
+  }
   const open = l.lastIn && Date.now() - l.lastIn < 24 * 3600e3;
   if (!open) {
     if (!TEMPLATE) throw new Error('passou de 24h sem resposta: precisa de modelo aprovado (WA_TEMPLATE)');
@@ -106,7 +115,9 @@ async function sendQueued(q) {
 }
 let busy = false;
 async function tick() {
-  if (busy || !WA_TOKEN || !PHONE_ID) return; busy = true;
+  if (busy) return;
+  if (MODE === 'oficial' ? !PHONE_ID : !waqr.ready()) return;
+  busy = true;
   try {
     for (const q of S.queue.filter(x => x.status === 'agendada' && x.at <= Date.now())) {
       const l = leadById(q.leadId);
@@ -118,6 +129,7 @@ async function tick() {
         log('enviada', q.id, 'para', l && l.wa);
       } catch (e) { q.status = 'erro'; q.err = e.message; log('erro ao enviar', q.id, e.message); }
       save();
+      await new Promise(r => setTimeout(r, 3000 + Math.random() * 4000)); // intervalo entre envios
     }
   } finally { busy = false; }
 }
@@ -125,45 +137,84 @@ setInterval(tick, 10000);
 
 /* ---------- API de Conversões (Meta) ---------- */
 async function sendEvent(l, ev) {
-  if (!l.metaLeadId) { ev.status = 'só no CRM'; return; }
-  if (!DATASET_ID || !WABA_ID || !WA_TOKEN) { ev.status = 'pronto, aguardando integração'; return; }
-  const data = { event_name: ev.name, event_time: Math.floor(ev.at / 1000), action_source: 'business_messaging', messaging_channel: 'whatsapp',
-    user_data: { whatsapp_business_account_id: WABA_ID, ctwa_clid: l.metaLeadId } };
+  if (l.origin !== 'meta') { ev.status = 'só no CRM'; return; }
+  const token = env.META_CAPI_TOKEN || WA_TOKEN;
+  if (!DATASET_ID || !token) { ev.status = 'pronto, aguardando integração'; return; }
+  const sha = v => crypto.createHash('sha256').update(String(v)).digest('hex');
+  let data;
+  if (WABA_ID && l.metaLeadId) {
+    // API oficial: liga o evento ao clique exato no anúncio
+    data = { event_name: ev.name, event_time: Math.floor(ev.at / 1000), action_source: 'business_messaging', messaging_channel: 'whatsapp',
+      user_data: { whatsapp_business_account_id: WABA_ID, ctwa_clid: l.metaLeadId } };
+  } else {
+    // QR code: o Meta liga o evento à pessoa pelo telefone (criptografado)
+    data = { event_name: ev.name, event_time: Math.floor(ev.at / 1000), action_source: 'system_generated',
+      user_data: { ph: l.wa ? [sha(l.wa)] : [], external_id: [sha(l.id)] }, custom_data: { lead_event_source: 'CRM ARQ Mídia', event_source: 'crm' } };
+  }
   if (ev.name === 'Purchase') data.custom_data = { currency: 'BRL', value: l.value || PRICE[String(l.car || '').toLowerCase()] || 1000 };
-  try { await graph('/' + DATASET_ID + '/events', { data: [data] }); ev.status = 'enviado'; log('evento', ev.name, l.name); }
+  try {
+    const r = await fetch(GRAPH + '/' + DATASET_ID + '/events?access_token=' + encodeURIComponent(token), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [data] }) });
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status)); ev.status = 'enviado'; log('evento', ev.name, l.name); }
   catch (e) { ev.status = 'erro'; ev.err = e.message; log('erro evento', ev.name, e.message); }
   save();
 }
 
-/* ---------- webhook ---------- */
-function onMessage(value) {
+/* ---------- mensagens que chegam ---------- */
+// m = { jid, wa, name, text, ad, fromMe }
+function inbound(m) {
+  let l = S.leads.find(x => (m.jid && x.jid === m.jid) || (m.wa && x.wa === m.wa));
+  if (m.fromMe) { if (l) { (l.chat = l.chat || []).push({ dir: 'out', text: m.text, at: Date.now(), manual: true }); save(); } return; }
+  if (!l) {
+    const o = detectOrigin(m.ad, m.text);
+    const fromAd = o.origin === 'meta';
+    if (AUTO_ONLY_META && !fromAd && o.none) return; // conversa comum (amigo, cliente antigo): não vira lead
+    l = { id: uid('l'), jid: m.jid || '', wa: m.wa || '', name: m.name || (m.wa ? fmtPhone(m.wa) : 'Sem nome'), phone: m.wa ? fmtPhone(m.wa) : '', car: 'Serviço a definir', city: '',
+      origin: o.origin, src: o.src, detail: o.detail, stage: 0, at: Date.now(), replied: false, events: [{ name: 'LeadSubmitted', stage: 0, at: Date.now() }],
+      metaLeadId: o.ctwa || '', adId: o.adId || '', chat: [{ dir: 'in', text: m.text || '(clicou no anúncio)', at: Date.now() }], lastIn: Date.now() };
+    S.leads.unshift(l);
+    if (fromAd || !AUTO_ONLY_META) runAuto('entrada', l);
+    sendEvent(l, l.events[0]);
+    log('lead novo', l.name, o.origin);
+  } else {
+    l.chat = l.chat || []; l.chat.push({ dir: 'in', text: m.text, at: Date.now() }); l.lastIn = Date.now();
+    if (!l.jid && m.jid) l.jid = m.jid;
+    if (l.chat.filter(c => c.dir === 'in').length > 1 && !l.replied) { l.replied = true; cancelAuto(l); }
+  }
+  save(); setTimeout(tick, 1500);
+}
+// formulário do site (ou página de captura): manda nome, WhatsApp e os parâmetros do link (utm_*, gclid, fbclid)
+function fromForm(f) {
+  const wa = String(f.whatsapp || f.phone || f.telefone || '').replace(/\D/g, '');
+  const num = wa.length && wa.length <= 11 ? '55' + wa : wa;
+  const src = String(f.utm_source || '').toLowerCase();
+  let origin = 'site', sid = 'site', detail = 'Formulário do site';
+  if (f.gclid || src === 'google') { origin = 'google'; sid = 'google'; detail = 'Google Ads' + (f.utm_term ? ' · pesquisa: ' + f.utm_term : f.utm_campaign ? ' · ' + f.utm_campaign : ''); }
+  else if (f.fbclid || /facebook|instagram|meta|fb|ig/.test(src)) { origin = /instagram|ig/.test(src) && !/cpc|paid|ads/.test(String(f.utm_medium || '')) ? 'organic' : 'meta'; sid = origin === 'meta' ? 'meta-ad' : 'insta'; detail = (origin === 'meta' ? 'Anúncio: ' : 'Instagram · ') + (f.utm_campaign || f.utm_content || 'formulário'); }
+  else if (src) detail = 'Formulário do site · ' + src + (f.utm_campaign ? ' / ' + f.utm_campaign : '');
+  let l = num && S.leads.find(x => x.wa === num);
+  if (l) return l;
+  l = { id: uid('l'), jid: '', wa: num, name: String(f.nome || f.name || 'Sem nome').slice(0, 80), phone: num ? fmtPhone(num) : '', car: String(f.servico || f.service || 'Serviço a definir').slice(0, 60), city: String(f.empresa || f.company || '').slice(0, 80),
+    origin, src: sid, detail, stage: 0, at: Date.now(), replied: false, events: [{ name: 'LeadSubmitted', stage: 0, at: Date.now() }], metaLeadId: '', chat: [], lastIn: 0,
+    utm: { source: f.utm_source || '', medium: f.utm_medium || '', campaign: f.utm_campaign || '', content: f.utm_content || '', term: f.utm_term || '', gclid: f.gclid || '', fbclid: f.fbclid || '' } };
+  S.leads.unshift(l);
+  if (!AUTO_ONLY_META || origin === 'meta') runAuto('entrada', l);
+  sendEvent(l, l.events[0]); save(); setTimeout(tick, 1500); log('lead do formulário', l.name, origin);
+  return l;
+}
+function onOfficial(value) {
   const contacts = value.contacts || [];
   for (const msg of value.messages || []) {
-    const wa = msg.from;
-    const name = ((contacts.find(c => c.wa_id === wa) || {}).profile || {}).name || fmtPhone(wa);
+    const wa = msg.from, r = msg.referral;
+    const name = ((contacts.find(c => c.wa_id === wa) || {}).profile || {}).name || '';
     const text = msg.type === 'text' ? msg.text.body : msg.type === 'audio' ? '🎤 áudio' : msg.type === 'button' ? msg.button.text : '[' + msg.type + ']';
-    let l = S.leads.find(x => x.wa === wa);
-    if (!l) {
-      const o = detectOrigin(msg);
-      l = { id: uid('l'), wa, name, phone: fmtPhone(wa), car: 'Serviço a definir', city: '', origin: o.origin, src: o.src, detail: o.detail, stage: 0, at: Date.now(),
-        replied: false, events: [{ name: 'LeadSubmitted', stage: 0, at: Date.now() }], metaLeadId: o.ctwa || '', chat: [], lastIn: Date.now() };
-      S.leads.unshift(l);
-      l.chat.push({ dir: 'in', text, at: Date.now() });
-      runAuto('entrada', l);
-      sendEvent(l, l.events[0]);
-      log('lead novo', name, o.origin);
-    } else {
-      l.chat = l.chat || []; l.chat.push({ dir: 'in', text, at: Date.now() }); l.lastIn = Date.now();
-      // a primeira mensagem já é a que criou o lead; a partir da segunda conta como resposta
-      if (l.chat.filter(c => c.dir === 'in').length > 1 && !l.replied) { l.replied = true; cancelAuto(l); }
-    }
+    inbound({ wa, name, text, ad: r ? { title: r.headline || '', body: r.body || '', sourceId: r.source_id || '', sourceUrl: r.source_url || '', ctwaClid: r.ctwa_clid || '' } : null });
   }
-  save(); setTimeout(tick, 500);
 }
 
 /* ---------- tela ↔ servidor ---------- */
 const evKey = e => e.name + '@' + e.at;
 function merge(c) {
+  delete c.wa;
   if (Array.isArray(c.autos)) S.autos = c.autos;
   for (const cl of c.leads || []) {
     let sl = leadById(cl.id);
@@ -195,6 +246,7 @@ function authed(req) {
 function readBody(req, limit = 8e6) {
   return new Promise((res, rej) => { const ch = []; let n = 0; req.on('data', d => { n += d.length; if (n > limit) { rej(new Error('grande demais')); req.destroy(); } else ch.push(d); }); req.on('end', () => res(Buffer.concat(ch))); req.on('error', rej); });
 }
+const view = () => Object.assign({}, S, { wa: MODE === 'qr' ? Object.assign({ mode: 'qr', onlyMeta: AUTO_ONLY_META }, waqr.status) : { mode: 'oficial', state: PHONE_ID ? 'conectado' : 'sem configuração', onlyMeta: AUTO_ONLY_META } });
 const json = (res, code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
 
 http.createServer(async (req, res) => {
@@ -213,14 +265,30 @@ http.createServer(async (req, res) => {
       }
       res.writeHead(200); res.end('ok');
       const body = JSON.parse(raw.toString() || '{}');
-      for (const e of body.entry || []) for (const ch of e.changes || []) if (ch.value && ch.value.messages) onMessage(ch.value);
+      for (const e of body.entry || []) for (const ch of e.changes || []) if (ch.value && ch.value.messages) onOfficial(ch.value);
       return;
+    }
+    if (u.pathname === '/lead') {
+      // aberto de propósito: o formulário do site manda pra cá (sem senha)
+      const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' };
+      if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
+      if (req.method !== 'POST') { res.writeHead(405, cors); return res.end(); }
+      const raw = (await readBody(req, 2e4)).toString();
+      const f = (req.headers['content-type'] || '').includes('json') ? JSON.parse(raw || '{}') : Object.fromEntries(new URLSearchParams(raw));
+      if (!String(f.whatsapp || f.phone || f.telefone || '').replace(/\D/g, '')) { res.writeHead(400, cors); return res.end('falta o WhatsApp'); }
+      fromForm(f);
+      if (f.redirect && /^https?:\/\//.test(f.redirect)) { res.writeHead(303, Object.assign({ Location: f.redirect }, cors)); return res.end(); }
+      res.writeHead(200, Object.assign({ 'Content-Type': 'application/json' }, cors)); return res.end('{"ok":true}');
     }
     if (u.pathname === '/health') { res.writeHead(200); return res.end('ok'); }
     if (!authed(req)) { res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="CRM ARQ Midia"' }); return res.end('Senha necessária'); }
-    if (u.pathname === '/api/state' && req.method === 'GET') return json(res, 200, S);
-    if (u.pathname === '/api/state' && req.method === 'PUT') { merge(JSON.parse((await readBody(req)).toString())); return json(res, 200, S); }
+    if (u.pathname === '/api/state' && req.method === 'GET') return json(res, 200, view());
+    if (u.pathname === '/api/state' && req.method === 'PUT') { merge(JSON.parse((await readBody(req)).toString())); return json(res, 200, view()); }
+    if (u.pathname === '/api/wa/logout' && req.method === 'POST') { if (waqr) await waqr.logout(); return json(res, 200, view()); }
     if (u.pathname === '/' || u.pathname === '/index.html') { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); return fs.createReadStream(INDEX).pipe(res); }
     res.writeHead(404); res.end('não encontrado');
   } catch (e) { log('erro', e.message); if (!res.headersSent) json(res, 500, { error: e.message }); }
-}).listen(PORT, () => log('CRM no ar na porta', PORT, WA_TOKEN ? '(WhatsApp ligado)' : '(sem WA_TOKEN: não envia)'));
+}).listen(PORT, () => {
+  log('CRM no ar na porta', PORT, 'WhatsApp:', MODE === 'qr' ? 'QR code' : 'API oficial', AUTO_ONLY_META ? '(só responde anúncio do Meta)' : '');
+  if (waqr) waqr.start(path.join(env.DATA_DIR || __dirname, 'whatsapp-sessao'), inbound).catch(e => log('erro WhatsApp', e.message));
+});

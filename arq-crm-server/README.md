@@ -1,37 +1,32 @@
 # CRM ARQ Mídia
 
-CRM ligado ao WhatsApp oficial (Cloud API) e à API de Conversões do Meta.
+CRM ligado ao WhatsApp e à API de Conversões do Meta.
 
-- Lead manda mensagem → entra sozinho em **01 novo lead**, com a origem identificada (anúncio do Meta, código `[IG]`, `[IND-NOME]`, `[SITE]` ou WhatsApp direto).
-- A automação de entrada manda a boas-vindas e os follow-ups pelo seu número. Se o lead responder, os follow-ups automáticos param.
-- Cada etapa do funil manda o evento que o Meta reconhece (LeadSubmitted, QualifiedLead, AddToCart, InitiateCheckout, Purchase), quando o lead veio de anúncio de WhatsApp.
+- **Conexão pelo QR code** (padrão, igual ao Trizup): em Rastreamento aparece o QR. No celular: WhatsApp Business > Dispositivos conectados > Conectar dispositivo.
+- **Só quem vem do anúncio do Meta** vira lead e recebe a boas-vindas e os follow-ups automáticos. Conversa comum (amigo, cliente antigo) fica de fora. Para mudar: `AUTO_ONLY_META=false`.
+- Quem chega com código no texto (`[IG]` da bio, `[IND-NOME]` de indicação, `[SITE]`) vira lead, sem mensagem automática.
+- **Formulário do site**: envie (POST, JSON ou form) para `/lead` os campos `nome`, `whatsapp`, `empresa`, `servico` e os `utm_*`, `gclid`, `fbclid` do link. O CRM marca Google Ads, Meta, Instagram ou Site sozinho. Campo opcional `redirect` leva a pessoa pra uma página de obrigado.
+- Cada etapa do funil manda pro Meta o evento que ele reconhece (LeadSubmitted, QualifiedLead, AddToCart, InitiateCheckout, Purchase) para leads do anúncio do Meta.
+- Se o lead responder, os follow-ups automáticos dele param. Entre um envio e outro tem intervalo e "digitando...".
 
-Sem dependências: só Node 20+. `node server.js` e abre `http://localhost:3000`.
+**Risco do QR code:** não é a API oficial. O WhatsApp pode banir o número se houver muito envio, envio pra quem não chamou ou muitas denúncias. Isso afeta só o número; leads e funil continuam salvos aqui.
 
-## Variáveis (no Render, em Environment)
+## Rodar
+
+Node 20+. `npm install` e `node server.js`, depois abra `http://localhost:3000`.
+
+## Variáveis
 
 | Variável | O que é |
 |---|---|
-| `CRM_PASSWORD` | Senha pra abrir o CRM (usuário pode ser qualquer um) |
-| `WA_TOKEN` | Token de acesso do app no Meta (WhatsApp > Configuração da API) |
-| `WA_PHONE_NUMBER_ID` | ID do número de telefone |
-| `WA_BUSINESS_ACCOUNT_ID` | ID da conta do WhatsApp Business |
-| `WA_VERIFY_TOKEN` | Uma senha que você inventa e coloca igual no Webhook do Meta |
-| `META_APP_SECRET` | Opcional. Chave secreta do app (Configurações > Básico), confere que o webhook veio do Meta |
-| `META_DATASET_ID` | Opcional. Dataset da API de Conversões. Sem ele, os eventos ficam "aguardando integração" |
-| `WA_TEMPLATE` | Opcional. Modelo aprovado pra mandar depois de 24h sem resposta (ex.: `hello_world`, com `WA_TEMPLATE_LANG=en_US`) |
-| `DATA_DIR` | Pasta onde fica o `data.json`. No plano grátis do Render os dados somem quando o servidor reinicia; pra valer, use plano pago com disco e `DATA_DIR=/var/data` |
+| `CRM_PASSWORD` | Senha pra abrir o CRM (o usuário pode ser qualquer um) |
+| `DATA_DIR` | Pasta dos dados e da sessão do WhatsApp (no Render: `/var/data`, com disco) |
+| `AUTO_ONLY_META` | `false` para mandar automação pra todo mundo que chamar. Padrão: só anúncio do Meta |
+| `META_DATASET_ID` | Opcional. ID do conjunto de dados (Pixel) no Gerenciador de Eventos, para mandar os eventos do funil |
+| `META_CAPI_TOKEN` | Opcional. Token da API de Conversões (Gerenciador de Eventos > Configurações > Gerar token) |
 
-## Webhook no Meta
+Modo API oficial (opcional, em vez do QR): `WA_TOKEN`, `WA_PHONE_NUMBER_ID`, `WA_BUSINESS_ACCOUNT_ID`, `WA_VERIFY_TOKEN`, `META_APP_SECRET`, `WA_TEMPLATE`. Com `WA_TOKEN` preenchido, o CRM usa a API oficial e ignora o QR.
 
-App > WhatsApp > Configuração > Webhook:
-- URL de callback: `https://SEU-APP.onrender.com/webhook`
-- Token de verificação: o mesmo de `WA_VERIFY_TOKEN`
-- Depois, em "Campos do webhook", assine **messages**.
+## Render
 
-## Limites do teste
-
-- O número de teste do Meta só manda pra até 5 números cadastrados em "Para".
-- Fora da janela de 24h, o WhatsApp só aceita modelo aprovado (`WA_TEMPLATE`).
-- Áudio gravado no Chrome sai em webm; o WhatsApp prefere ogg/opus ou mp3. Se der erro, envie um arquivo mp3.
-- O token temporário do painel vence em 24h. Para uso de verdade, gere um token permanente (Usuário do sistema no Business).
+Precisa ficar ligado 24h (plano Starter, cerca de US$ 7/mês) e ter um disco em `/var/data`. No plano grátis o servidor dorme e o WhatsApp desconecta.

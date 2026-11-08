@@ -221,6 +221,15 @@ button.lrow:hover { background: var(--bg); }
 .bub--in { background: var(--tint); justify-self: start; border-bottom-left-radius: 4px; }
 .bub--out { background: #FFE7C2; justify-self: end; border-bottom-right-radius: 4px; }
 
+/* conexão WhatsApp */
+.wa-card { padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; }
+.wa-card h2 { margin: 0 0 4px; font: 800 20px/24px var(--font-d); }
+.wa-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 18px; }
+.wa-card img { width: 220px; height: 220px; border-radius: 12px; border: 1px solid var(--line); background: #fff; }
+.wa-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+.wa-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-radius: var(--r-md); background: #FFE7C2; font-weight: 700; font-size: 13px; }
+@media (max-width: 760px) { .wa-card { grid-template-columns: minmax(0, 1fr); } .wa-card img { justify-self: center; } }
+
 /* soon */
 .soon { padding: 48px 24px; text-align: center; display: grid; gap: 8px; justify-items: center; }
 .soon h2 { margin: 0; font: 900 28px/32px var(--font); }
@@ -431,7 +440,7 @@ button.lrow:hover { background: var(--bg); }
       if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return;
       const d = await r.json(); if (!d.live) return;
       LIVE = true; S = d; document.body.classList.add('is-live');
-      $('#mode-note').textContent = 'Conectado ao WhatsApp. Leads chegam sozinhos e as mensagens saem pelo seu número.';
+      $('#mode-note').textContent = 'CRM rodando no servidor. Leads chegam sozinhos e as mensagens saem pelo seu número.';
       if (!S.autos) { S.autos = defaultAutos(); push(); }
       render(); setInterval(pull, 5000);
     } catch (e) {}
@@ -491,7 +500,8 @@ button.lrow:hover { background: var(--bg); }
   function vLeads() {
     const q = ui.q.trim().toLowerCase();
     const F = S.leads.filter(l => (!ui.origin || l.origin === ui.origin) && (!q || (l.name + ' ' + l.phone + ' ' + l.car + ' ' + l.city).toLowerCase().includes(q)));
-    return head('a origem é marcada sozinha pelo rastreamento', 'Leads', `<button class="btn btn--line" type="button" data-new>${ICON.plus}Cadastrar na mão</button><button class="btn btn--lime" type="button" data-sim="">${ICON.bolt}Simular lead chegando</button>`) +
+    const banner = LIVE && S.wa && S.wa.state !== 'conectado' ? `<div class="wa-banner"><span>O WhatsApp não está conectado. Os leads não chegam até você conectar.</span><button class="btn btn--line btn--sm" type="button" data-go="rastreamento">Conectar agora</button></div>` : '';
+    return banner + head('a origem é marcada sozinha pelo rastreamento', 'Leads', `<button class="btn btn--line" type="button" data-new>${ICON.plus}Cadastrar na mão</button><button class="btn btn--lime" type="button" data-sim="">${ICON.bolt}Simular lead chegando</button>`) +
       `<div class="chips"><button type="button" class="chip" data-origin="" aria-pressed="${!ui.origin}">Todos <b>${S.leads.length}</b></button>${Object.keys(ORIGINS).filter(o => o !== 'manual' || S.leads.some(l => l.origin === 'manual')).map(o => `<button type="button" class="chip" data-origin="${o}" aria-pressed="${ui.origin === o}">${ODOT(o)}${ORIGINS[o]} <b>${S.leads.filter(l => l.origin === o).length}</b></button>`).join('')}</div>
       <label class="search"><span class="sr">Buscar</span>${ICON.search}<input class="input" id="q" type="search" value="${esc(ui.q)}" placeholder="Buscar nome, empresa, telefone ou serviço"></label>
       <div class="card list"><div class="lrow lrow--head"><span>Lead</span><span class="c-phone">WhatsApp</span><span class="c-car">Serviço</span><span>Etapa</span><span>De onde veio</span></div>
@@ -572,9 +582,21 @@ button.lrow:hover { background: var(--bg); }
         <div><button type="button" class="btn btn--line btn--sm" data-sadd="${a.id}">${ICON.plus}Adicionar mensagem</button></div>
       </section>`).join('')}</div>`;
   }
+  function waCard() {
+    if (!LIVE || !S.wa || S.wa.mode !== 'qr') return '';
+    const w = S.wa, on = w.state === 'conectado';
+    return `<section class="card wa-card"><div>
+      <h2><span class="wa-dot" style="background:${on ? '#1E8E3E' : 'var(--lime)'}"></span>${on ? 'WhatsApp conectado' : w.qr ? 'Conecte o seu WhatsApp' : 'Conectando ao WhatsApp...'}</h2>
+      <p>${on ? 'Número ' + esc(fmtWa(w.me)) + '. ' + (w.onlyMeta ? 'O CRM só cria lead e manda automação pra quem chega pelo anúncio do Meta. As outras conversas ficam de fora.' : 'Todo mundo que chamar vira lead e recebe a automação.')
+        : w.qr ? 'No celular, abra o WhatsApp Business > ⋮ (ou Configurações) > <b>Dispositivos conectados</b> > <b>Conectar dispositivo</b> e aponte para o código ao lado.' : 'Aguarde alguns segundos.'}</p>
+      ${on ? '<div style="margin-top:12px"><button type="button" class="btn btn--line btn--sm" data-walogout>Desconectar este número</button></div>' : ''}
+    </div>${!on && w.qr ? `<img src="${w.qr}" alt="QR code para conectar o WhatsApp">` : ''}</section>`;
+  }
+  const fmtWa = d => { d = String(d || ''); return d.startsWith('55') && d.length >= 12 ? '(' + d.slice(2, 4) + ') ' + d.slice(4, -4) + '-' + d.slice(-4) : d; };
+  const realLink = link => LIVE && S.wa && S.wa.me ? link.replace(WA.replace('wa.me/', ''), S.wa.me) : link;
   function vRastreamento() {
     const cnt = id => S.leads.filter(l => l.src === id).length;
-    return head('o CRM descobre sozinho de onde o lead veio', 'Rastreamento', `<button class="btn btn--lime" type="button" data-sim="">${ICON.bolt}Simular lead chegando</button>`) +
+    return head('o CRM descobre sozinho de onde o lead veio', 'Rastreamento', `<button class="btn btn--lime" type="button" data-sim="">${ICON.bolt}Simular lead chegando</button>`) + waCard() +
       `<div class="how3">
         <div class="card"><span class="step__n">1</span><div><b>Cada canal tem seu rastreio</b>Anúncio do Meta, link da bio, link de indicação, site e Google.</div></div>
         <div class="card"><span class="step__n">2</span><div><b>O lead clica e chama</b>Ele só manda mensagem ou preenche o site. Não precisa dizer de onde veio.</div></div>
@@ -583,10 +605,11 @@ button.lrow:hover { background: var(--bg); }
       <div class="srcs">${SRC.map(sc => `<section class="card src">
         <span class="origin" style="justify-self:start">${ODOT(sc.origin)}${ORIGINS[sc.origin]}</span>
         <h2>${esc(sc.name)}</h2><p>${esc(sc.how)}</p>
-        ${sc.link ? `<div class="lnk"><code>${esc(sc.link)}</code><button type="button" class="btn btn--line btn--sm" data-copy="${esc(sc.id)}">Copiar</button></div>` : `<div class="lnk lnk--auto">${esc(sc.auto)}</div>`}
+        ${sc.link ? `<div class="lnk"><code>${esc(realLink(sc.link))}</code><button type="button" class="btn btn--line btn--sm" data-copy="${esc(sc.id)}">Copiar</button></div>` : `<div class="lnk lnk--auto">${esc(sc.auto)}</div>`}
         <div class="src__foot"><span><b>${cnt(sc.id)}</b> lead${cnt(sc.id) === 1 ? "" : "s"} por aqui</span><button type="button" class="btn btn--line btn--sm" data-sim="${sc.id}">Simular lead por aqui</button></div>
       </section>`).join('')}</div>
-      <p class="note">Por enquanto a chegada do lead é simulada. Para valer de verdade: ligar a API oficial do WhatsApp (é ela que entrega o anúncio de origem e a primeira mensagem com o código) e colocar esses links na bio, no site e nos anúncios do Google. O número ${WA.replace('wa.me/', '')} é de exemplo.</p>`;
+      ${LIVE ? `<p class="note"><b>Formulário do site:</b> faça o formulário enviar para <code>${esc(location.origin)}/lead</code> os campos <code>nome</code>, <code>whatsapp</code>, <code>empresa</code>, <code>servico</code> e os <code>utm_*</code>, <code>gclid</code> e <code>fbclid</code> que vieram no link. O CRM marca Google, Meta, Instagram ou Site sozinho.</p>` : ''}
+      <p class="note" ${LIVE ? 'hidden' : ''}>Por enquanto a chegada do lead é simulada. Para valer de verdade: ligar a API oficial do WhatsApp (é ela que entrega o anúncio de origem e a primeira mensagem com o código) e colocar esses links na bio, no site e nos anúncios do Google. O número ${WA.replace('wa.me/', '')} é de exemplo.</p>`;
   }
   const POOL = { n: ['Rafaela Souza', 'Eduardo Lima', 'Camila Rocha', 'Thiago Becker', 'Larissa Pires', 'Bruno Antunes', 'Vanessa Ferraz', 'Gustavo Reis', 'Aline Kuhn', 'Mateus Borges'],
     c: ['Padaria Pão Quente', 'Barbearia Navalha', 'Pet Shop Amigo Fiel', 'Ótica Visão', 'Restaurante Sabor Caseiro', 'Loja Bella Moda', 'Clínica Bem Estar', 'Imobiliária Lar'],
@@ -726,8 +749,9 @@ button.lrow:hover { background: var(--bg); }
     const t = e.target;
     const g = t.closest('[data-go]'); if (g) return go(g.dataset.go);
     if (t.closest('[data-new]')) return openNew();
+    if (t.closest('[data-walogout]')) { fetch('api/wa/logout', { method: 'POST' }).then(r => r.json()).then(d => { S = d; render(); toast('WhatsApp desconectado', 'Escaneie o QR de novo para conectar outro número.'); }); return; }
     const sm = t.closest('[data-sim]'); if (sm) return simulate(sm.dataset.sim);
-    const cp = t.closest('[data-copy]'); if (cp) { const sc = srcById(cp.dataset.copy); const url = 'https://' + sc.link.replace(/ /g, '%20').replace(/\[/g, '%5B').replace(/\]/g, '%5D'); try { navigator.clipboard.writeText(url).then(() => toast('Link copiado', sc.name), () => toast('Copie o link', url)); } catch (err) { toast('Copie o link', url); } return; }
+    const cp = t.closest('[data-copy]'); if (cp) { const sc = srcById(cp.dataset.copy); const url = 'https://' + realLink(sc.link).replace(/ /g, '%20').replace(/\[/g, '%5B').replace(/\]/g, '%5D'); try { navigator.clipboard.writeText(url).then(() => toast('Link copiado', sc.name), () => toast('Copie o link', url)); } catch (err) { toast('Copie o link', url); } return; }
     if (t.closest('[data-close]') || t.matches('[data-scrim]')) { ui.open = null; $('#layer').innerHTML = ''; return; }
     const o = t.closest('[data-origin]'); if (o) { ui.origin = o.dataset.origin; return render(); }
     const ld = t.closest('[data-lead]'); if (ld && !ld.dataset.dragged) { ui.open = ld.dataset.lead; return renderDrawer(); }

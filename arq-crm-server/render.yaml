@@ -2,25 +2,21 @@ services:
   - type: web
     name: arq-crm
     runtime: node
-    plan: free
-    buildCommand: "true"
     rootDir: arq-crm-server
+    plan: starter            # precisa ficar ligado 24h pra manter o WhatsApp conectado (o grátis dorme)
+    buildCommand: npm install --omit=dev
     startCommand: node server.js
     healthCheckPath: /health
+    disk:
+      name: dados
+      mountPath: /var/data   # guarda os leads e a sessão do WhatsApp (sem isso, pede QR a cada reinício)
+      sizeGB: 1
     envVars:
+      - key: DATA_DIR
+        value: /var/data
       - key: CRM_PASSWORD
-        sync: false
-      - key: WA_TOKEN
-        sync: false
-      - key: WA_PHONE_NUMBER_ID
-        sync: false
-      - key: WA_BUSINESS_ACCOUNT_ID
-        sync: false
-      - key: WA_VERIFY_TOKEN
-        sync: false
-      - key: META_APP_SECRET
         sync: false
       - key: META_DATASET_ID
         sync: false
-      - key: WA_TEMPLATE
+      - key: META_CAPI_TOKEN
         sync: false
